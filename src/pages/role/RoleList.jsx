@@ -1,13 +1,27 @@
 import React from 'react';
 
-const RoleList = ({ roles }) => (
+const RoleList = ({ roles, onEdit, onDelete }) => (
   <div style={styles.roleList}>
     <h2>Existing Roles</h2>
     {roles.length > 0 ? (
-      <ul>
+      <ul style={styles.list}>
         {roles.map((role) => (
           <li key={role.id} style={styles.roleItem}>
-            {role.name}
+            <span style={styles.roleName}>{role.name}</span>
+            <div style={styles.actions}>
+              <button
+                onClick={() => onEdit(role)}
+                style={{ ...styles.button, ...styles.editBtn }}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDelete(role.id)}
+                style={{ ...styles.button, ...styles.deleteBtn }}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -20,13 +34,44 @@ const RoleList = ({ roles }) => (
 const styles = {
   roleList: {
     marginTop: '2rem',
-    padding: '1rem',
-    background: '#f9f9f9',
-    borderRadius: '8px',
+    padding: '1.5rem',
+    background: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  },
+  list: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
   },
   roleItem: {
-    padding: '0.5rem 0',
-    borderBottom: '1px solid #ddd',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.75rem 0',
+    borderBottom: '1px solid #eee',
+  },
+  roleName: {
+    fontWeight: '500',
+  },
+  actions: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  button: {
+    padding: '6px 12px',
+    borderRadius: '6px',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  editBtn: {
+    backgroundColor: '#4CAF50',
+    color: 'white',
+  },
+  deleteBtn: {
+    backgroundColor: '#f44336',
+    color: 'white',
   },
 };
 

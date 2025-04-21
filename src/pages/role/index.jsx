@@ -5,14 +5,14 @@ import {
   getUsers,
   assignRoleToUser,
   getPermissions,
-  assignPermissionsToRole
+  assignPermissionsToRole,
+  deleteRole,
+  editRole
 } from 'helpers/apiHelper';
 
 import CreateRoleForm from './CreateRoleForm';
-import AssignRoleForm from './AssignRoleForm';
-import AssignPermissionForm from './AssignPermissionForm';
-
 import RoleList from './RoleList';
+
 const RolePage = () => {
   const [roleName, setRoleName] = useState('');
   const [roles, setRoles] = useState([]);
@@ -21,7 +21,9 @@ const RolePage = () => {
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [selectedRoleForPermission, setSelectedRoleForPermission] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedRoleName, setEditedRoleName] = useState('');
 
   useEffect(() => {
     loadRoles();
@@ -48,6 +50,32 @@ const RolePage = () => {
     e.preventDefault();
     await createRole(roleName);
     setRoleName('');
+    loadRoles();
+  };
+
+  const handleEdit = (role) => {
+    setSelectedRole(role);
+    setEditedRoleName(role.name);
+    setEditMode(true);
+  };
+
+  const handleUpdateRole = async (e) => {
+    e.preventDefault();
+    if (!selectedRole) return;
+
+    const response = await editRole(selectedRole.id, editedRoleName);
+    if (response.success) {
+      loadRoles();
+      setEditMode(false);
+      setSelectedRole(null);
+      setEditedRoleName('');
+    } else {
+      alert(response.error);
+    }
+  };
+
+  const handleDelete = async (roleId) => {
+    await deleteRole(roleId);
     loadRoles();
   };
 
@@ -84,27 +112,59 @@ const RolePage = () => {
         setRoleName={setRoleName}
         handleCreateRole={handleCreateRole}
       />
-      <RoleList roles={roles} />
 
-      <AssignRoleForm
-        users={users}
-        roles={roles}
-        selectedUser={selectedUser}
-        setSelectedUser={setSelectedUser}
-        selectedRole={selectedRole}
-        setSelectedRole={setSelectedRole}
-        handleAssignRole={handleAssignRole}
-      />
+      {editMode && (
+        <form onSubmit={handleUpdateRole} style={{ marginBottom: '2rem' }}>
+          <h2>Edit Role</h2>
+          <input
+            type="text"
+            value={editedRoleName}
+            onChange={(e) => setEditedRoleName(e.target.value)}
+            placeholder="Enter new role name"
+            required
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              marginBottom: '1rem',
+              border: '1px solid #ccc',
+              borderRadius: '6px'
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Update Role
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditMode(false);
+              setSelectedRole(null);
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#ccc',
+              color: '#000',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              marginLeft: '1rem'
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      )}
 
-      <AssignPermissionForm
-        roles={roles}
-        permissions={permissions}
-        selectedRoleForPermission={selectedRoleForPermission}
-        setSelectedRoleForPermission={setSelectedRoleForPermission}
-        selectedPermissions={selectedPermissions}
-        handlePermissionChange={handlePermissionChange}
-        handleAssignPermissions={handleAssignPermissions}
-      />
+      <RoleList roles={roles} onEdit={handleEdit} onDelete={handleDelete} />
     </div>
   );
 };

@@ -236,6 +236,27 @@ export const createRole = async (roleName) => {
   }
 };
 
+export const editRole = async (id, newName) => {
+  try {
+    const response = await apiClient.put(`/edit-role/${id}/`, { name: newName });
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error editing role:', error);
+    return { success: false, error: error.response?.data || 'Failed to edit role' };
+  }
+};
+
+export const deleteRole = async (id) => {
+  try {
+    await apiClient.delete(`/delete-role/${id}/`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting role:', error);
+    return { success: false, error: error.response?.data || 'Failed to delete role' };
+  }
+};
+
+
 export const assignRoleToUser = async (userId, roleId) => {
   try {
     const response = await apiClient.post('/assign-role/', {
@@ -267,7 +288,7 @@ export const getUsers = async () => {
 
 export const getPermissions = async () => {
   try {
-    const response = await apiClient.get('/permissions/');
+    const response = await apiClient.get('/get-permissions/');
     return response.data;
   } catch (error) {
     console.error('Error fetching permissions:', error);

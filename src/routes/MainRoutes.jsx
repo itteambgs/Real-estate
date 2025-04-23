@@ -5,7 +5,7 @@ import { Navigate } from 'react-router-dom';
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
-import RolePage from 'pages/role';
+
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
 
@@ -32,9 +32,10 @@ const Profile = Loadable(lazy(() => import('@/layout/Dashboard/Header/HeaderCont
 const EditProfile = Loadable(lazy(() => import('@/layout/Dashboard/Header/HeaderContent/Profile/EditProfile')));
 
 
+const RolePage = Loadable(lazy(() => import('pages/role')));
+const CreateRolePage = Loadable(lazy(() => import('pages/role/CreateRolePage')));
 
-
-
+const EditRolePage = Loadable(lazy(() => import('pages/role/EditRolePage')));
 
 
 
@@ -95,8 +96,16 @@ const MainRoutes = {
           element: <EditProfile />
         },
         {
-          path: 'role', 
+          path: 'roles', 
           element: <RolePage />
+        },
+        {
+          path:'role/create',
+          element: <CreateRolePage />
+        },
+        {
+          path: 'role/edit/:id',
+          element: <EditRolePage />
         }
         
       ]

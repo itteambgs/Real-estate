@@ -9,7 +9,7 @@ const role = {
       id: 'role',
       title: 'Role',
       type: 'item',
-      url: '/role',
+      url: '/roles',
       icon: IconUsers,
       breadcrumbs: false
     }

@@ -13,6 +13,7 @@ import {
   message
 } from 'antd';
 
+
 const { Title } = Typography;
 
 const RolePage = () => {
@@ -48,6 +49,7 @@ const RolePage = () => {
       </div>
 
       <RoleList roles={roles} onEdit={handleEdit} onDelete={handleDelete} />
+  
     </div>
   );
 };

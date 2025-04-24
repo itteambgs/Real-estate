@@ -2,7 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRole, getPermissions } from 'helpers/apiHelper';
-import { Button, Input, Checkbox, Space, message, Spin } from 'antd';
+import {
+  Button,
+  Input,
+  Checkbox,
+  Space,
+  message,
+  Spin,
+  Row,
+  Col,
+  Card
+} from 'antd';
 
 const CreateRolePage = () => {
   const navigate = useNavigate();
@@ -91,44 +101,66 @@ const CreateRolePage = () => {
         />
 
         <div>
-          <h4>Select Permissions</h4>
-          {Object.entries(permissions).map(([model, actions]) => {
-            const currently = selectedPermissions[model] || [];
-            const actionKeys = Object.keys(actions);
-            const allSelected = actionKeys.every((a) => currently.includes(actions[a].value));
+          <h2>Select Permissions</h2>
+          <Row gutter={[16, 16]}>
+            {Object.entries(permissions).map(([model, actions]) => {
+              const currently = selectedPermissions[model] || [];
+              const actionKeys = Object.keys(actions);
+              const allSelected = actionKeys.every((a) =>
+                currently.includes(actions[a].value)
+              );
 
-            return (
-              <div key={model} style={{ marginBottom: '1rem' }}>
-                <h5 style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {model}
-                  <Checkbox
-                    indeterminate={
-                      currently.length > 0 && !allSelected
+              return (
+                <Col xs={24} sm={24} md={12} lg={8} xl={6} key={model}>
+                  <Card
+                    title={
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          textTransform: 'capitalize',
+                          fontWeight: 600
+                        }}
+                      >
+                        <span>{model}</span>
+                        <Checkbox
+                          indeterminate={
+                            currently.length > 0 && !allSelected
+                          }
+                          checked={allSelected}
+                          onChange={() => handleSelectAllToggle(model)}
+                        >
+                          {allSelected ? 'Unselect All' : 'Select All'}
+                        </Checkbox>
+                      </div>
                     }
-                    checked={allSelected}
-                    onChange={() => handleSelectAllToggle(model)}
+                    size="small"
+                    style={{ height: '100%' }}
                   >
-                    {allSelected ? 'Unselect All' : 'Select All'}
-                  </Checkbox>
-                </h5>
-
-                <Checkbox.Group
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
-                  value={currently}
-                  onChange={(vals) => handlePermissionChange(model, vals)}
-                >
-                  {['add', 'change', 'delete', 'view'].map((action) => {
-                    const perm = actions[action];
-                    return perm ? (
-                      <Checkbox key={perm.value} value={perm.value}>
-                        {action}
-                      </Checkbox>
-                    ) : null;
-                  })}
-                </Checkbox.Group>
-              </div>
-            );
-          })}
+                    <Checkbox.Group
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem'
+                      }}
+                      value={currently}
+                      onChange={(vals) => handlePermissionChange(model, vals)}
+                    >
+                      {['add', 'change', 'delete', 'view'].map((action) => {
+                        const perm = actions[action];
+                        return perm ? (
+                          <Checkbox key={perm.value} value={perm.value}>
+                            {action}
+                          </Checkbox>
+                        ) : null;
+                      })}
+                    </Checkbox.Group>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
         </div>
 
         <Button

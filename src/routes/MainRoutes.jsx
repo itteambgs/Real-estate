@@ -37,6 +37,7 @@ const CreateRolePage = Loadable(lazy(() => import('pages/role/CreateRolePage')))
 
 const EditRolePage = Loadable(lazy(() => import('pages/role/EditRolePage')));
 
+const UserRole = Loadable(lazy(() => import('pages/User/UserRole')));
 
 
 
@@ -106,6 +107,10 @@ const MainRoutes = {
         {
           path: 'role/edit/:id',
           element: <EditRolePage />
+        },
+        {
+          path: 'user-role',
+          element: <UserRole />
         }
         
       ]

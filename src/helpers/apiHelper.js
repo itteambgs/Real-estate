@@ -236,6 +236,30 @@ export const createRole = async (roleData) => {
 
 
 
+export const getRoleById = async (id) => {
+  try {
+    const response = await apiClient.get(`/edit-role/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching role by ID:', error);
+    return null;
+  }
+};
+
+
+
+// Update role API function
+export const updateRole = async (id, roleData) => {
+  try {
+    const response = await apiClient.put(`/edit-role/${id}/`, roleData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating role:', error);
+    throw error; // Make sure errors are thrown to be handled in the calling component
+  }
+};
+
+
 // export const editRole = async (id, newName) => {
 //   try {
 //     const response = await apiClient.put(`/edit-role/${id}/`, { name: newName });
@@ -256,18 +280,21 @@ export const deleteRole = async (id) => {
   }
 };
 
-export const assignRoleToUser = async (userId, roleId) => {
+export const assignRoleToUser = async (userId, roleIds) => {
   try {
-    const response = await apiClient.post('/assign-role/', {
-      user_id: userId,
-      role_id: roleId
-    });
+    const payload = Array.isArray(roleIds)
+      ? { role_ids: roleIds }
+      : { role_id: roleIds };
+
+    const response = await apiClient.patch(`/assign-role/${userId}/`, payload);
     return response.data;
   } catch (error) {
-    console.error('Error assigning role:', error);
+    console.error('Error assigning role(s):', error);
     return null;
   }
 };
+
+
 
 export const getUsers = async () => {
   try {
@@ -310,30 +337,6 @@ export const getRolePermissions = async (roleId) => {
   } catch (error) {
     console.error('Error fetching role permissions:', error);
     return [];
-  }
-};
-
-// New API function to get a role by ID
-export const getRoleById = async (id) => {
-  try {
-    const response = await apiClient.get(`/edit-role/${id}/`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching role by ID:', error);
-    return null;
-  }
-};
-
-// apiHelper.js
-
-// Update role API function
-export const updateRole = async (id, roleData) => {
-  try {
-    const response = await apiClient.put(`/edit-role/${id}/`, roleData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating role:', error);
-    throw error; // Make sure errors are thrown to be handled in the calling component
   }
 };
 

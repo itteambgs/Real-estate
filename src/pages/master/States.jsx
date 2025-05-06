@@ -232,6 +232,7 @@ const States = () => {
               onChange: setSelectedRowKeys,
             }}
           />
+          {/* styles */}
 <Row justify="end" style={{ marginTop: 16 }}>
   <Col>
     <Pagination

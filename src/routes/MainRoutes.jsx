@@ -23,9 +23,17 @@ const Countries = Loadable(lazy(() => import('pages/master/Countries')));
 const States = Loadable(lazy(() => import('pages/master/States')));
 const Cities = Loadable(lazy(() => import('pages/master/Cities')));
 const Properties = Loadable(lazy(() => import('pages/master/Properties')));
+const Document = Loadable(lazy(() => import('pages/master/Document')));
 const OwnershipType = Loadable(lazy(() => import('pages/master/OwnershipType')));
 const BHKType = Loadable(lazy(() => import('pages/master/BHKType')));
-const PropertyType = Loadable(lazy(() => import('pages/master/PropertyType')));
+
+const PropertyType = Loadable(lazy(() => import('pages/master/property type/PropertyType')));
+const CreateProptype=Loadable(lazy(() => import(('pages/master/property type/CreateProptype'))));
+const EditProptype=Loadable(lazy(() => import(('pages/master/property type/EditProptype'))));
+const ReadProptype=Loadable(lazy(() => import(('pages/master/property type/Readproptype')))); 
+
+
+
 const DocumentType = Loadable(lazy(() => import('pages/master/DocumentType')));
 
 const Profile = Loadable(lazy(() => import('@/layout/Dashboard/Header/HeaderContent/Profile')));
@@ -84,9 +92,14 @@ const MainRoutes = {
         { path: 'master/states', element: <States /> },
         { path: 'master/cities', element: <Cities /> },
         { path: 'master/properties', element: <Properties /> },
+        { path: 'master/document', element: <Document />},
         { path: 'master/ownership-type', element: <OwnershipType /> },
         { path: 'master/bhk-type', element: <BHKType /> },
-        { path: 'master/property-type', element: <PropertyType /> },
+        // { path: 'master/property-type', element: <PropertyType /> },
+        { path: 'master/property-type/create', element: <CreateProptype />},
+        
+        { path: 'master/property-type/edit/:id', element: <EditProptype />},
+        { path: 'master/property-type/', element: <ReadProptype />},
         { path: 'master/document-type', element: <DocumentType /> },
         {
           path: 'profile',
@@ -111,7 +124,8 @@ const MainRoutes = {
         {
           path: 'user-role',
           element: <UserRole />
-        }
+        },
+       
         
       ]
     }

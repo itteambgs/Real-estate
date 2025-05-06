@@ -100,6 +100,7 @@ const Properties = () => {
 
   return (
     <div>
+      <h1>Properties</h1>
      
 
       <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>

@@ -190,7 +190,100 @@ export const deleteProperty = async (id) => {
   }
 };
 
+// Property Type APIs
+// Property Type APIs
+export const createPropertyType = async (data) => {
+  try {
+    const response = await apiClient.post('/property-types/', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating property type:', error.response?.data || error.message);
+    throw error;
+  }
+};
 
+export const getPropertyType = async () => {
+  try {
+    const response = await apiClient.get('/property-types/', );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating property type:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// export const getPropertyType = async (page = 1, pageSize = 10) => {
+//   try {
+//     const response = await apiClient.get('/property-types/', {
+//       params: {
+//         page,
+//         page_size: pageSize
+//       }
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching property types:', error);
+//     return { results: [], count: 0 };
+//   }
+// };
+
+export const deletePropertyType = async (id) => {
+  try {
+    await apiClient.delete(`/property-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting Property type :', error);
+    return { success: false, error: error.response?.data || 'Failed to delete role' };
+  }
+};
+
+
+export const updatePropertyType = async (id, propertyTypeData) => {
+  try {
+    const response = await apiClient.put(`/property-types/${id}/`, propertyTypeData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error updating property type:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to update property type' };
+  }
+};
+
+
+
+
+//Document
+
+export const getdocument = async () => {
+  try {
+    const response = await apiClient.get('/documents/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching documents:', error.response?.data || error.message);
+    return [];
+  }
+};
+
+//Document types
+export const getDocumentTypes = async () => {
+  try {
+    const response = await apiClient.get('/document-types/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching document types:', error.response?.data || error.message);
+    return [];
+  }
+}
+//ownership types
+
+export const getownership = async () => {
+  try {
+    const response = await apiClient.get('/ownership-types/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ownership:', error.response?.data || error.message);
+    return [];
+  }
+};
 
 export const updateUserProfile = async (profileData) => {
   try {
@@ -317,6 +410,9 @@ export const getPermissions = async () => {
     return [];
   }
 };
+//assign permissions to role
+
+
 
 export const assignPermissionsToRole = async (roleId, permissionIds) => {
   try {
@@ -340,6 +436,25 @@ export const getRolePermissions = async (roleId) => {
   }
 };
 
+export const updateUserRole = async (id, roleData) => {
+  try {
+    const response = await apiClient.put(`/user-role-update/${id}/`, roleData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error updating user roles:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to update user roles' };
+  }
+};
+
+export const deleteUserRoles = async (id) => {
+  try {
+    const response = await apiClient.delete(`/user-role-delete/${id}/`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error deleting user roles:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to delete user roles' };
+  }
+};
 
 
 

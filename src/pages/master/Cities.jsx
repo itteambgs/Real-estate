@@ -10,213 +10,187 @@ import {
   Input,
   message,
   Select,
+  Pagination,
+  Row,
+  Col,
 } from "antd";
 import {
   getCities,
-  addCities,
-  updateCities,
-  deleteCities,
+  addCity,
+  updateCity,
+  deleteCity,
   getCountries,
   getStates,
 } from "helpers/apiHelper";
-import "antd/dist/reset.css";
 
 const { Option } = Select;
+const { Search } = Input;
 
 const Cities = () => {
   const [cities, setCities] = useState([]);
-  const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterState, setFilterState] = useState(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentCity, setCurrentCity] = useState(null);
   const [form] = Form.useForm();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-  // Load countries and states initially
   useEffect(() => {
-    const init = async () => {
-      await fetchCountries();
-      await fetchStates();
-    };
-    init();
+    fetchCountries();
+    fetchStates();
   }, []);
 
-  // Fetch city data only after countries and states are loaded
   useEffect(() => {
-    if (countries.length && states.length) {
-      fetchData(pagination.current);
-    }
-  }, [countries, states]);
+    fetchCities();
+  }, [currentPage, searchTerm, filterState]);
 
-  const fetchData = async (page) => {
+  const fetchCountries = async () => {
+    try {
+      const res = await getCountries();
+      setCountries(res.results || []);
+    } catch {
+      message.error("Failed to load countries");
+    }
+  };
+
+  const fetchStates = async () => {
+    try {
+      const res = await getStates();
+      setStates(res.results || []);
+    } catch {
+      message.error("Failed to load states");
+    }
+  };
+
+  const fetchCities = async () => {
     setLoading(true);
     setError(null);
+
+    const params = new URLSearchParams();
+    params.append("page", currentPage);
+    if (searchTerm) params.append("search", searchTerm);
+    if (filterState) params.append("state", filterState);
+
     try {
-      const data = await getCities(page);
-
-      // Enrich city records with state and country names
-      const enrichedCities = data.results.map((city) => {
-        const countryObj = countries.find((c) => c.id === city.country);
-        const stateObj = states.find((s) => s.id === city.state);
-        return {
-          ...city,
-          countryName: countryObj?.name || "N/A",
-          stateName: stateObj?.name || "N/A",
-        };
-      });
-
-      setCities(enrichedCities);
-      setPagination({
-        current: page,
-        pageSize: 10,
-        total: data.count,
-      });
-    } catch (err) {
-      console.error("Error fetching cities:", err);
+      const res = await getCities(`?${params.toString()}`);
+      setCities(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch {
       setError("Failed to fetch cities");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCountries = async () => {
-    try {
-      const data = await getCountries();
-      setCountries(data.results);
-    } catch (err) {
-      console.error("Error fetching countries:", err);
-    }
+  const handleCitySearch = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
   };
 
-  const fetchStates = async (countryId = null) => {
-    try {
-      const data = await getStates(countryId);
-      setStates(data.results);
-    } catch (err) {
-      console.error("Error fetching states:", err);
-    }
+  const handleStateSearch = (value) => {
+    setFilterState(value);
+    setCurrentPage(1);
   };
 
   const handleAdd = () => {
-    setIsEditing(false);
-    setCurrentCity(null);
     form.resetFields();
-    setStates([]); // Empty initially
+    setIsEditing(false);
     setIsModalOpen(true);
   };
 
   const handleEdit = (record) => {
-    setIsEditing(true);
     setCurrentCity(record);
-    fetchStates(record.country).then(() => {
-      const selectedState = states.find((s) => s.id === record.state);
-      form.setFieldsValue({
-        city: record.city,
-        country: record.country,
-        state: {
-          label: selectedState?.name, // Use labelInValue for state
-          value: selectedState?.id,
-        },
-      });
+    setIsEditing(true);
+    form.setFieldsValue({
+      city: record.city,
+      state: record.state,
+      country: record.country,
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm("Are you sure you want to delete this city?");
-    if (!confirm) return;
+    if (!window.confirm("Are you sure to delete this city?")) return;
+    await deleteCity(id);
+    message.success("Deleted");
+    fetchCities();
+  };
 
-    const response = await deleteCities(id);
-    if (response.success) {
-      fetchData(pagination.current);
-      message.success("City deleted successfully");
-    } else {
-      message.error(`Delete failed: ${response.error}`);
-    }
+  const handleBulkDelete = async () => {
+    if (!window.confirm("Delete selected items?")) return;
+    await Promise.all(selectedRowKeys.map((id) => deleteCity(id)));
+    setSelectedRowKeys([]);
+    fetchCities();
   };
 
   const handleFormSubmit = async (values) => {
-    const payload = {
+    const data = {
       city: values.city,
-      state: values.state.value,  // Use value (state id) for submission
+      state: values.state,
       country: values.country,
     };
 
-    if (isEditing) {
-      const response = await updateCities(currentCity.id, payload);
-      if (response.success) {
-        fetchData(pagination.current);
-        message.success("City updated successfully");
+    try {
+      if (isEditing) {
+        await updateCity(currentCity.id, data);
+        message.success("City updated");
       } else {
-        message.error(`Update failed: ${response.error}`);
+        await addCity(data);
+        message.success("City added");
       }
-    } else {
-      const response = await addCities(payload);
-      if (response.success) {
-        fetchData(pagination.current);
-        message.success("City added successfully");
-      } else {
-        message.error(`Add failed: ${response.error}`);
-      }
+      setIsModalOpen(false);
+      fetchCities();
+    } catch {
+      message.error("Failed to save city");
     }
-    setIsModalOpen(false);
-  };
-
-  const handleCountryChange = (value) => {
-    form.setFieldsValue({ state: undefined });
-    fetchStates(value);
-  };
-
-  const handleTableChange = (pagination) => {
-    fetchData(pagination.current);
   };
 
   const columns = [
     {
       title: "ID",
       dataIndex: "id",
-      key: "id",
-      width: "10%",
+      align: "center",
+      width: 100,
     },
     {
       title: "City",
       dataIndex: "city",
-      key: "city",
-      width: "25%",
+      align: "left",
+      width: 200,
     },
     {
       title: "State",
-      dataIndex: "stateName",
-      key: "stateName",
-      width: "25%",
+      dataIndex: "state",
+      render: (id) => states.find((s) => s.id === id)?.state || "N/A",
+      align: "center",
+      width: 200,
     },
     {
       title: "Country",
-      dataIndex: "countryName",
-      key: "countryName",
-      width: "20%",
+      dataIndex: "country",
+      render: (id) => countries.find((c) => c.id === id)?.name || "N/A",
+      align: "center",
+      width: 200,
     },
     {
       title: "Actions",
-      key: "actions",
       render: (_, record) => (
         <>
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Edit
-          </Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>
-            Delete
-          </Button>
+          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+          <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button>
         </>
       ),
-      width: "20%",
+      align: "center",
+      width: 200,
     },
   ];
 
@@ -224,31 +198,57 @@ const Cities = () => {
     <div>
       <Typography.Title level={2}>Cities</Typography.Title>
 
-      <div style={{ textAlign: "right", marginBottom: 16 }}>
-        <Button type="primary" onClick={handleAdd}>
-          Add City
-        </Button>
-      </div>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col flex="auto">
+          <Search placeholder="Search by city name" onSearch={handleCitySearch} enterButton allowClear />
+        </Col>
+        <Col flex="auto">
+          <Search placeholder="Search by state" onSearch={handleStateSearch} enterButton allowClear />
+        </Col>
+        <Col flex="250px">
+          <Select placeholder="Filter by state" allowClear style={{ width: "100%" }} onChange={handleStateSearch}>
+            {states.map((state) => (
+              <Option key={state.id} value={state.id}>{state.state}</Option>
+            ))}
+          </Select>
+        </Col>
+        <Col>
+          <Button type="primary" onClick={handleAdd}>Add City</Button>
+        </Col>
+        <Col>
+          <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
+            Delete Selected
+          </Button>
+        </Col>
+      </Row>
 
-      {error && <Alert message={error} type="error" showIcon />}
-
+      {error && <Alert type="error" message={error} />}
       {loading ? (
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <Spin size="large" />
-        </div>
+        <Spin />
       ) : (
-        <Table
-          dataSource={cities}
-          columns={columns}
-          rowKey="id"
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-          }}
-          onChange={handleTableChange}
-          scroll={{ x: "100%" }}
-        />
+        <>
+          <Table
+            rowKey="id"
+            columns={columns}
+            dataSource={cities}
+            pagination={false}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+            }}
+          />
+          <Row justify="end" style={{ marginTop: 16 }}>
+            <Col>
+              <Pagination
+                current={currentPage}
+                pageSize={10}
+                total={totalCount}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+              />
+            </Col>
+          </Row>
+        </>
       )}
 
       <Modal
@@ -258,13 +258,13 @@ const Cities = () => {
         onOk={() => form.submit()}
         okText={isEditing ? "Update" : "Add"}
       >
-        <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-          <Form.Item
-            name="country"
-            label="Country"
-            rules={[{ required: true, message: "Please select a country" }]}
-          >
-            <Select placeholder="Select a country" onChange={handleCountryChange}>
+        <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
+          <Form.Item name="city" label="City Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+
+          <Form.Item name="country" label="Country" rules={[{ required: true }]}>
+            <Select placeholder="Select country" loading={countries.length === 0}>
               {countries.map((country) => (
                 <Option key={country.id} value={country.id}>
                   {country.name}
@@ -272,25 +272,15 @@ const Cities = () => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
-            name="state"
-            label="State"
-            rules={[{ required: true, message: "Please select a state" }]}
-          >
-            <Select placeholder="Select a state">
+
+          <Form.Item name="state" label="State" rules={[{ required: true }]}>
+            <Select placeholder="Select state" loading={states.length === 0}>
               {states.map((state) => (
                 <Option key={state.id} value={state.id}>
-                  {state.name}
+                  {state.state}
                 </Option>
               ))}
             </Select>
-          </Form.Item>
-          <Form.Item
-            name="city"
-            label="City"
-            rules={[{ required: true, message: "Please enter city name" }]}
-          >
-            <Input />
           </Form.Item>
         </Form>
       </Modal>

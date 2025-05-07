@@ -228,46 +228,45 @@ export const deleteStates = async (id) => {
 
 // ===========================x=========================
 // This API list All cities to the system
-export const getCities = async (page = 1) => {
-  try {
-    const response = await apiClient.get(`/cities/?page=${page}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching cities:', error.response?.data || error.message);
-    return { results: [], count: 0 };
-  }
+
+
+
+
+// getCities
+export const getCities = async (query = "") => {
+  const response = await apiClient.get(`/cities/${query}`);
+  return response.data;
 };
 
-export const addCities = async (cityData) => {
+// addCity
+export const addCity = async (data) => {
   try {
-    const response = await apiClient.post('/cities/', cityData);
+    const response = await apiClient.post("/cities/", data);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error adding city:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to add city' };
+    return { success: false, error: error.response?.data || error };
   }
 };
 
-export const updateCities = async (id, cityData) => {
+// updateCity
+export const updateCity = async (id, data) => {
   try {
-    const response = await apiClient.put(`/cities/${id}/`, cityData);
+    const response = await apiClient.patch(`/cities/${id}/`, data);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error updating city:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to update city' };
+    return { success: false, error: error.response?.data || error };
   }
 };
 
-export const deleteCities = async (id) => {
+// deleteCity
+export const deleteCity = async (id) => {
   try {
     await apiClient.delete(`/cities/${id}/`);
     return { success: true };
   } catch (error) {
-    console.error('Error deleting city:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to delete city' };
+    return { success: false, error: error.response?.data || error };
   }
 };
-
 
 
 export const getProperties = async () => {

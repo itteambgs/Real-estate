@@ -13,6 +13,7 @@ import {
   Pagination,
   Row,
   Col,
+  Popconfirm,
 } from "antd";
 import {
   getCities,
@@ -28,30 +29,30 @@ const { Search } = Input;
 
 const Cities = () => {
   const [cities, setCities] = useState([]);
+  const [allCities, setAllCities] = useState([]);
   const [states, setStates] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterState, setFilterState] = useState(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentCity, setCurrentCity] = useState(null);
   const [form] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
+  const pageSize = 10;
+
   useEffect(() => {
     fetchCountries();
     fetchStates();
+    fetchAllCities();
   }, []);
 
   useEffect(() => {
-    fetchCities();
-  }, [currentPage, searchTerm, filterState]);
+    filterCities();
+  }, [searchTerm, currentPage, allCities, states, countries]);
 
   const fetchCountries = async () => {
     try {
@@ -71,34 +72,48 @@ const Cities = () => {
     }
   };
 
-  const fetchCities = async () => {
+  const fetchAllCities = async () => {
     setLoading(true);
-    setError(null);
-
-    const params = new URLSearchParams();
-    params.append("page", currentPage);
-    if (searchTerm) params.append("search", searchTerm);
-    if (filterState) params.append("state", filterState);
-
     try {
-      const res = await getCities(`?${params.toString()}`);
-      setCities(res.results || []);
-      setTotalCount(res.count || 0);
+      let page = 1;
+      let results = [];
+      let hasMore = true;
+      while (hasMore) {
+        const res = await getCities(`?page=${page}`);
+        results = [...results, ...(res.results || [])];
+        if (!res.next) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+      setAllCities(results);
     } catch {
-      setError("Failed to fetch cities");
+      setError("Failed to load cities");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCitySearch = (value) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
+  const filterCities = () => {
+    let filtered = allCities;
 
-  const handleStateSearch = (value) => {
-    setFilterState(value);
-    setCurrentPage(1);
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter((city) => {
+        const stateName = states.find((s) => s.id === city.state)?.state || "";
+        const countryName = countries.find((c) => c.id === city.country)?.name || "";
+        return (
+          city.city.toLowerCase().includes(term) ||
+          stateName.toLowerCase().includes(term) ||
+          countryName.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    setCities(filtered.slice(start, end));
   };
 
   const handleAdd = () => {
@@ -119,17 +134,20 @@ const Cities = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure to delete this city?")) return;
-    await deleteCity(id);
-    message.success("Deleted");
-    fetchCities();
+    try {
+      await deleteCity(id);
+      message.success("Deleted successfully");
+      fetchAllCities();
+    } catch {
+      message.error("Failed to delete city");
+    }
   };
 
   const handleBulkDelete = async () => {
     if (!window.confirm("Delete selected items?")) return;
     await Promise.all(selectedRowKeys.map((id) => deleteCity(id)));
     setSelectedRowKeys([]);
-    fetchCities();
+    fetchAllCities();
   };
 
   const handleFormSubmit = async (values) => {
@@ -148,7 +166,7 @@ const Cities = () => {
         message.success("City added");
       }
       setIsModalOpen(false);
-      fetchCities();
+      fetchAllCities();
     } catch {
       message.error("Failed to save city");
     }
@@ -157,9 +175,9 @@ const Cities = () => {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      align: "center",
-      width: 100,
+      key: "index",
+      width: "10%",
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
     },
     {
       title: "City",
@@ -186,7 +204,14 @@ const Cities = () => {
       render: (_, record) => (
         <>
           <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button>
+          <Popconfirm
+            title="Are you sure to delete this?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" danger>Delete</Button>
+          </Popconfirm>
         </>
       ),
       align: "center",
@@ -198,27 +223,31 @@ const Cities = () => {
     <div>
       <Typography.Title level={2}>Cities</Typography.Title>
 
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col flex="auto">
-          <Search placeholder="Search by city name" onSearch={handleCitySearch} enterButton allowClear />
-        </Col>
-        <Col flex="auto">
-          <Search placeholder="Search by state" onSearch={handleStateSearch} enterButton allowClear />
-        </Col>
-        <Col flex="250px">
-          <Select placeholder="Filter by state" allowClear style={{ width: "100%" }} onChange={handleStateSearch}>
-            {states.map((state) => (
-              <Option key={state.id} value={state.id}>{state.state}</Option>
-            ))}
-          </Select>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+        <Col>
+          <Search
+            placeholder="Search by City, State, or Country"
+            allowClear
+            enterButton
+            onSearch={(value) => setSearchTerm(value)}
+            onChange={(e) => {
+              setCurrentPage(1);
+              setSearchTerm(e.target.value);
+            }}
+            style={{ width: 550 }}
+          />
         </Col>
         <Col>
-          <Button type="primary" onClick={handleAdd}>Add City</Button>
-        </Col>
-        <Col>
-          <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
-            Delete Selected
-          </Button>
+          <Row gutter={8} justify="end">
+            <Col>
+              <Button type="primary" onClick={handleAdd}>Add City</Button>
+            </Col>
+            <Col>
+              <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
+                Delete Selected
+              </Button>
+            </Col>
+          </Row>
         </Col>
       </Row>
 
@@ -241,8 +270,18 @@ const Cities = () => {
             <Col>
               <Pagination
                 current={currentPage}
-                pageSize={10}
-                total={totalCount}
+                pageSize={pageSize}
+                total={
+                  allCities.filter((city) => {
+                    const stateName = states.find((s) => s.id === city.state)?.state || "";
+                    const countryName = countries.find((c) => c.id === city.country)?.name || "";
+                    return (
+                      city.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      stateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      countryName.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                  }).length
+                }
                 onChange={(page) => setCurrentPage(page)}
                 showSizeChanger={false}
               />

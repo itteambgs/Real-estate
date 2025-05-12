@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import {
   Table,
@@ -15,6 +13,7 @@ import {
   Pagination,
   Row,
   Col,
+  Popconfirm,
 } from "antd";
 import {
   getStates,
@@ -29,29 +28,28 @@ const { Search } = Input;
 
 const States = () => {
   const [states, setStates] = useState([]);
+  const [allStates, setAllStates] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCountry, setFilterCountry] = useState(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentState, setCurrentState] = useState(null);
   const [form] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
+  const pageSize = 10;
+
   useEffect(() => {
     fetchCountries();
+    fetchAllStates();
   }, []);
 
   useEffect(() => {
-    fetchStates();
-  }, [currentPage, searchTerm, filterCountry]);
+    filterStates();
+  }, [searchTerm, currentPage, allStates, countries]);
 
   const fetchCountries = async () => {
     try {
@@ -62,33 +60,49 @@ const States = () => {
     }
   };
 
-  const fetchStates = async () => {
+  const fetchAllStates = async () => {
     setLoading(true);
-    setError(null);
-
-    const params = new URLSearchParams();
-    params.append("page", currentPage);
-    if (searchTerm) params.append("search", searchTerm);
-    if (filterCountry) params.append("country", filterCountry);
-
     try {
-      const res = await getStates(`?${params.toString()}`);
-      setStates(res.results || []);
-      setTotalCount(res.count || 0);
-    } catch (err) {
+      let page = 1;
+      let results = [];
+      let hasMore = true;
+      while (hasMore) {
+        const res = await getStates(`?page=${page}`);
+        results = [...results, ...(res.results || [])];
+        if (!res.next) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+      setAllStates(results);
+    } catch {
       setError("Failed to fetch states");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+  const filterStates = () => {
+    let filtered = [...allStates];
+    if (searchTerm) {
+      filtered = filtered.filter((item) => {
+        const countryName = countries.find((c) => c.id === item.country)?.name || "";
+        return (
+          item.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          countryName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+    }
+
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    setStates(filtered.slice(start, end));
   };
 
-  const handleCountryChange = (value) => {
-    setFilterCountry(value);
+  const handleSearch = (value) => {
+    setSearchTerm(value);
     setCurrentPage(1);
   };
 
@@ -105,18 +119,28 @@ const States = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure to delete this state?")) return;
-    await deleteStates(id);
-    message.success("Deleted");
-    fetchStates();
-  };
+  // const handleDelete = async (id) => {
+  //   if (!window.confirm("Are you sure to delete this state?")) return;
+  //   await deleteStates(id);
+  //   message.success("Deleted");
+  //   fetchAllStates();
+  // };
+
+    const handleDelete = async (id) => {
+      try {
+        await deleteStates(id);
+        message.success("Deleted successfully");
+        fetchAllStates();
+      } catch {
+        message.error("Failed to delete States");
+      }
+    };
 
   const handleBulkDelete = async () => {
     if (!window.confirm("Delete selected items?")) return;
     await Promise.all(selectedRowKeys.map((id) => deleteStates(id)));
     setSelectedRowKeys([]);
-    fetchStates();
+    fetchAllStates();
   };
 
   const handleFormSubmit = async (values) => {
@@ -135,7 +159,7 @@ const States = () => {
         message.success("State added");
       }
       setIsModalOpen(false);
-      fetchStates();
+      fetchAllStates();
     } catch (err) {
       message.error("Failed to save");
     }
@@ -144,68 +168,75 @@ const States = () => {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      width: 100,  // Setting a fixed width for the ID column
-      align: "center",  // Aligning the text to the center
+      key: "index",
+      width: "10%",
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
     },
     {
       title: "State",
       dataIndex: "state",
-      width: 200,  // Adjust the width to fit the content
-      align: "left",  // Align text to the left
+      width: 200,
+      align: "left",
     },
     {
       title: "Code",
       dataIndex: "code",
-      width: 150,  // Adjust width for Code column
-      align: "center",  // Align text to the center
+      width: 150,
+      align: "center",
     },
     {
       title: "Country",
       dataIndex: "country",
       render: (id) => countries.find((c) => c.id === id)?.name || "N/A",
-      width: 200,  // Adjust width for Country column
-      align: "center",  // Align text to the left
+      width: 200,
+      align: "center",
     },
     {
       title: "Actions",
       render: (_, record) => (
         <>
           <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button>
+           <Popconfirm
+                      title="Are you sure to delete this?"
+                      onConfirm={() => handleDelete(record.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="link" danger>Delete</Button>
+                    </Popconfirm>
         </>
       ),
-      width: 200,  // Adjust width for Actions column
-      align: "center",  // Align actions to the center
+      width: 200,
+      align: "center",
     },
   ];
-  
+
+  const totalFiltered = allStates.filter((item) => {
+    const countryName = countries.find((c) => c.id === item.country)?.name || "";
+    return (
+      item.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      countryName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }).length;
+
   return (
     <div>
       <Typography.Title level={2}>States</Typography.Title>
 
       <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
-        <Col flex="auto">
-          <Search
-            placeholder="Search by state name"
-            onSearch={handleSearch}
-            allowClear
-            enterButton
-          />
-        </Col>
-        <Col flex="250px">
-          <Select
-            placeholder="Filter by country"
-            allowClear
-            style={{ width: "100%" }}
-            onChange={handleCountryChange}
-          >
-            {countries.map((country) => (
-              <Option key={country.id} value={country.id}>
-                {country.name}
-              </Option>
-            ))}
-          </Select>
+      <Col flex="auto">
+      <Search
+                    placeholder="Search by State, Code, or Country"
+                    allowClear
+                    enterButton
+                    onSearch={(value) => setSearchTerm(value)}
+                    onChange={(e) => {
+                      setCurrentPage(1);
+                      setSearchTerm(e.target.value);
+                    }}
+                    style={{ width: 550 }}
+                  />
         </Col>
         <Col>
           <Button type="primary" onClick={handleAdd}>Add State</Button>
@@ -232,18 +263,17 @@ const States = () => {
               onChange: setSelectedRowKeys,
             }}
           />
-          {/* styles */}
-<Row justify="end" style={{ marginTop: 16 }}>
-  <Col>
-    <Pagination
-      current={currentPage}
-      pageSize={10}
-      total={totalCount}
-      onChange={(page) => setCurrentPage(page)}
-      showSizeChanger={false}
-    />
-  </Col>
-</Row>
+          <Row justify="end" style={{ marginTop: 16 }}>
+            <Col>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalFiltered}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+              />
+            </Col>
+          </Row>
         </>
       )}
 
@@ -255,7 +285,7 @@ const States = () => {
         okText={isEditing ? "Update" : "Add"}
       >
         <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
-        <Form.Item name="country" label="Country" rules={[{ required: true }]}>
+          <Form.Item name="country" label="Country" rules={[{ required: true }]}>
             <Select placeholder="Select country">
               {countries.map((country) => (
                 <Option key={country.id} value={country.id}>
@@ -270,7 +300,6 @@ const States = () => {
           <Form.Item name="code" label="State Code" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          
         </Form>
       </Modal>
     </div>

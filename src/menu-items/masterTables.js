@@ -56,28 +56,33 @@ const masterTables = {
       title: 'Ownership Type',
       type: 'item',
       url: '/master/ownership-type',
-      icon: icons.TeamOutlined
+      icon: icons.TeamOutlined,
+      breadcrumbs: false
     },
     {
       id: 'bhk-type',
       title: 'BHK Type',
       type: 'item',
       url: '/master/bhk-type',
-      icon: icons.ApartmentOutlined
+      icon: icons.ApartmentOutlined,
+      breadcrumbs: false
+      
     },
     {
       id: 'property-type',
       title: 'Property Type',
       type: 'item',
       url: '/master/property-type',
-      icon: icons.FileDoneOutlined
+      icon: icons.FileDoneOutlined,
+      breadcrumbs: false
     },
     {
       id: 'document-type',
       title: 'Document Type',
       type: 'item',
       url: '/master/document-type',
-      icon: icons.FileTextOutlined
+      icon: icons.FileTextOutlined,
+      breadcrumbs: false
     },
   ]
 };

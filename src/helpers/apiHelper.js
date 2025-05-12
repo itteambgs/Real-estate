@@ -124,7 +124,7 @@ export const changePassword = async (oldPassword, newPassword) => {
 
 // This API list All country to the system
 
-// Fetch all countries
+// getCountries
 export const getCountries = async () => {
   try {
     const response = await apiClient.get('/countries/');
@@ -135,7 +135,7 @@ export const getCountries = async () => {
   }
 };
 
-// This API adds a new country to the system
+// addCountries
 
 export const addCountries = async (countriesData) => {
   try {
@@ -147,8 +147,7 @@ export const addCountries = async (countriesData) => {
   }
 };
 
-// This API Edit country to the system
-
+// updateCountries
 export const updateCountries = async (id, countriesData) => {
   try {
     const response = await apiClient.put(`/countries/${id}/`, countriesData);
@@ -159,7 +158,7 @@ export const updateCountries = async (id, countriesData) => {
   }
 };
 
-// This API Delete country to the system
+// deleteCountries
 
 export const deleteCountries = async (id) => {
   try {
@@ -171,23 +170,9 @@ export const deleteCountries = async (id) => {
   }
 };
 
+
 // ===========================x=========================
-// This API list All country to the system
-
-
-
-// Fetch states by States
-// export const getStates = async (countryId) => {
-//   try {
-//     const response = await apiClient.get(`/states/?country=${countryId}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching states:", error);
-//     throw error;
-//   }
-// };
-
-
+// This API list All States to the system
 
 // getStates
 export const getStates = async (query = "") => {
@@ -225,12 +210,8 @@ export const deleteStates = async (id) => {
   }
 };
 
-
 // ===========================x=========================
 // This API list All cities to the system
-
-
-
 
 // getCities
 export const getCities = async (query = "") => {
@@ -262,6 +243,136 @@ export const updateCity = async (id, data) => {
 export const deleteCity = async (id) => {
   try {
     await apiClient.delete(`/cities/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// ===========================x=========================
+// This API list All BHKTypes to the system
+
+// getBHKTypes
+export const getBHKTypes = async () => {
+  try {
+    const response = await apiClient.get('/bhk-types/');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching BHKTypes:", error);
+    throw error;
+  }
+};
+
+// addBHKType
+export const addBHKType = async (data) => {
+  try {
+    const response = await apiClient.post("/bhk-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// updateCity
+export const updateBHKType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/bhk-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteBHKType
+export const deleteBHKType = async (id) => {
+  try {
+    await apiClient.delete(`/bhk-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// ===========================x=========================
+// This API list All OwnershipType to the system
+
+//getownership
+export const getownership = async () => {
+  try {
+    const response = await apiClient.get('/ownership-types/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ownership:', error.response?.data || error.message);
+    return [];
+  }
+};
+
+// addOwnershipType
+export const addOwnershipType = async (data) => {
+  try {
+    const response = await apiClient.post("/ownership-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// updateOwnershipType
+export const updateOwnershipType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/ownership-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteOwnershipType
+export const deleteOwnershipType = async (id) => {
+  try {
+    await apiClient.delete(`/ownership-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+
+// Get all Document Types
+export const getDocumentTypes = async () => {
+  try {
+    const response = await apiClient.get('/document-types/');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching document types:", error);
+    throw error;
+  }
+};
+
+// Add a new Document Type
+export const addDocumentType = async (data) => {
+  try {
+    const response = await apiClient.post("/document-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Update an existing Document Type
+export const updateDocumentType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/document-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Delete a Document Type
+export const deleteDocumentType = async (id) => {
+  try {
+    await apiClient.delete(`/document-types/${id}/`);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.response?.data || error };

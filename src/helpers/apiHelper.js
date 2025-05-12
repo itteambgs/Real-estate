@@ -337,6 +337,8 @@ export const deleteOwnershipType = async (id) => {
   }
 };
 
+// ===========================x=========================
+// This API list All Document Types to the system
 
 // Get all Document Types
 export const getDocumentTypes = async () => {
@@ -378,6 +380,52 @@ export const deleteDocumentType = async (id) => {
     return { success: false, error: error.response?.data || error };
   }
 };
+
+// ===========================x=========================
+// This API list All Property Types to the system
+
+// Get all Property Types
+export const getPropertyTypes = async () => {
+  try {
+    const response = await apiClient.get('/property-types/');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching property types:", error);
+    throw error;
+  }
+};
+
+// Add a new Property Type
+export const addPropertyType = async (data) => {
+  try {
+    const response = await apiClient.post("/property-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Update an existing Property Type
+export const updatePropertyType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/property-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Delete a Property Type
+export const deletePropertyType = async (id) => {
+  try {
+    await apiClient.delete(`/property-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+
 
 
 export const getProperties = async () => {

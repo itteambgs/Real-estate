@@ -101,7 +101,52 @@ export const logoutUser = () => {
   removeAuthTokens();
   window.location.replace('/login');
 };
+//add user
+export const addUser = async (payload) => {
+  try {
+    const response = await apiClient.post('/users/', payload);
+    console.log('sdf:',response.data);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // The server responded with a status code outside 2xx
+      console.error('Error adding user (response):', error.response.data);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('Error adding user (no response):', error.request);
+    } else {
+      // Something else went wrong
+      console.error('Error adding user (general):', error.message);
+    }
+    throw error; // re-throw to handle it further in calling code
+  }
+};
 
+
+///delete user
+export const deleteUser = async (id) => {
+  try {
+    await apiClient.delete(`/users/${id}/`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return {
+      success: false,
+      error: error.response?.data || 'Failed to delete user',
+    };
+  }
+};
+
+// Update user 
+export const updateUser = async (id, userData) => {
+  try {
+    const response = await apiClient.put(`/users/${id}/`, userData); // Adjust endpoint if needed
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+};
 // ====== Password Change ====== //
 export const changePassword = async (oldPassword, newPassword) => {
   try {
@@ -119,7 +164,11 @@ export const changePassword = async (oldPassword, newPassword) => {
   }
 };
 
+
+
 // ====== Master Table API Functions ====== //
+
+//countries 
 export const getCountries = async () => {
   try {
     const response = await apiClient.get('/countries/');
@@ -129,6 +178,39 @@ export const getCountries = async () => {
     return [];
   }
 };
+
+export const addCountries = async (countriesData) => {
+  try {
+    const response = await apiClient.post('/countries/', countriesData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error adding countries:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to add countries' };
+  }
+};
+
+export const updateCountries = async (id, countriesData) => {
+  try {
+    const response = await apiClient.put(`/countries/${id}/`, countriesData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error updating countries:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to update countries' };
+  }
+};
+
+export const deleteCountries = async (id) => {
+  try {
+    await apiClient.delete(`/countries/${id}/`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting countries:', error.response?.data || error);
+    return { success: false, error: error.response?.data || 'Failed to delete countries' };
+  }
+};
+
+
+//states
 
 export const getStates = async () => {
   try {
@@ -140,15 +222,74 @@ export const getStates = async () => {
   }
 };
 
-export const getCities = async () => {
+
+export const addStates = async (data) => {
   try {
-    const response = await apiClient.get('/cities/');
-    return response.data;
+    const response = await apiClient.post("/states/", data);
+    return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error fetching cities:', error.response?.data || error.message);
-    return [];
+    return { success: false, error: error.response?.data || error };
   }
 };
+
+// updateStates
+export const updateStates = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/states/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteStates
+export const deleteStates = async (id) => {
+  try {
+    await apiClient.delete(`/states/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+//cites
+
+// getCities
+export const getCities = async (query = "") => {
+  const response = await apiClient.get(`/cities/${query}`);
+  return response.data;
+};
+
+// addCity
+export const addCity = async (data) => {
+  try {
+    const response = await apiClient.post("/cities/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// updateCity
+export const updateCity = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/cities/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteCity
+export const deleteCity = async (id) => {
+  try {
+    await apiClient.delete(`/cities/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
 
 export const getProperties = async () => {
   try {
@@ -160,6 +301,8 @@ export const getProperties = async () => {
   }
 };
 
+
+// Add Property
 export const addProperty = async (propertyData) => {
   try {
     const response = await apiClient.post('/properties/', propertyData);
@@ -167,6 +310,38 @@ export const addProperty = async (propertyData) => {
   } catch (error) {
     console.error('Error adding property:', error.response?.data || error);
     return { success: false, error: error.response?.data || 'Failed to add property' };
+  }
+};
+
+export const getDropdownOptions = async () => {
+  try {
+    const [
+      bhkRes,
+      citiesRes,
+      statesRes,
+      countriesRes,
+      ownershipRes,
+      propertyTypesRes,
+    ] = await Promise.all([
+      apiClient.get('/bhk-types/'),
+      apiClient.get('/cities/'),
+      apiClient.get('/states/'),
+      apiClient.get('/countries/'),
+      apiClient.get('/ownership-types/'),
+      apiClient.get('/property-types/'),
+    ]);
+
+    return {
+      bhkTypes: bhkRes.data.map(item => ({ value: item.id, text: item.name })),
+      cities: citiesRes.data.map(item => ({ value: item.id, label: item.name })),
+      states: statesRes.data.map(item => ({ value: item.id, label: item.name })),
+      countries: countriesRes.data.map(item => ({ value: item.id, label: item.name })),
+      ownershipTypes: ownershipRes.data.map(item => ({ value: item.id, label: item.name })),
+      propertyTypes: propertyTypesRes.data.map(item => ({ value: item.id, label: item.name })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch dropdowns", error);
+    throw error;
   }
 };
 
@@ -264,17 +439,60 @@ export const getdocument = async () => {
 };
 
 //Document types
-export const getDocumentTypes = async () => {
+// export const getDocumentTypes = async () => {
+//   try {
+//     const response = await apiClient.get('/document-types/');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching document types:', error.response?.data || error.message);
+//     return [];
+//   }
+// }
+
+
+// getBHKTypes
+export const getBHKTypes = async () => {
   try {
-    const response = await apiClient.get('/document-types/');
+    const response = await apiClient.get('/bhk-types/');
     return response.data;
   } catch (error) {
-    console.error('Error fetching document types:', error.response?.data || error.message);
-    return [];
+    console.error("Error fetching BHKTypes:", error);
+    throw error;
   }
-}
-//ownership types
+};
 
+// addBHKType
+export const addBHKType = async (data) => {
+  try {
+    const response = await apiClient.post("/bhk-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// updatebhkType
+export const updateBHKType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/bhk-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteBHKType
+export const deleteBHKType = async (id) => {
+  try {
+    await apiClient.delete(`/bhk-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+// This API list All OwnershipType to the system
+
+//getownership
 export const getownership = async () => {
   try {
     const response = await apiClient.get('/ownership-types/');
@@ -282,6 +500,80 @@ export const getownership = async () => {
   } catch (error) {
     console.error('Error fetching ownership:', error.response?.data || error.message);
     return [];
+  }
+};
+
+// addOwnershipType
+export const addOwnershipType = async (data) => {
+  try {
+    const response = await apiClient.post("/ownership-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// updateOwnershipType
+export const updateOwnershipType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/ownership-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// deleteOwnershipType
+export const deleteOwnershipType = async (id) => {
+  try {
+    await apiClient.delete(`/ownership-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+
+// This API list All Document Types to the system
+
+// Get all Document Types
+export const getDocumentTypes = async () => {
+  try {
+    const response = await apiClient.get('/document-types/');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching document types:", error);
+    throw error;
+  }
+};
+
+// Add a new Document Type
+export const addDocumentType = async (data) => {
+  try {
+    const response = await apiClient.post("/document-types/", data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Update an existing Document Type
+export const updateDocumentType = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`/document-types/${id}/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
+  }
+};
+
+// Delete a Document Type
+export const deleteDocumentType = async (id) => {
+  try {
+    await apiClient.delete(`/document-types/${id}/`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.response?.data || error };
   }
 };
 
@@ -302,7 +594,16 @@ export const updateUserProfile = async (profileData) => {
   }
 };
 
-
+/////////user get data by id
+export const getUserById = async (id) => {
+  try {
+    const response = await apiClient.get(`/users/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching users by ID:', error);
+    return null;
+  }
+};
 
 
 
@@ -375,17 +676,17 @@ export const deleteRole = async (id) => {
 
 export const assignRoleToUser = async (userId, roleIds) => {
   try {
-    const payload = Array.isArray(roleIds)
-      ? { role_ids: roleIds }
-      : { role_id: roleIds };
-
+    const payload = { groups: roleIds };
+    console.log(payload) // Changed from role_ids to groups
     const response = await apiClient.patch(`/assign-role/${userId}/`, payload);
+    console.log(payload)
     return response.data;
   } catch (error) {
     console.error('Error assigning role(s):', error);
     return null;
   }
 };
+
 
 
 
@@ -436,16 +737,36 @@ export const getRolePermissions = async (roleId) => {
   }
 };
 
-export const updateUserRole = async (id, roleData) => {
+// export const updateUserRole = async (id, roleData) => {
+//   try {
+//     const response = await apiClient.put(`/user-role-update/${id}/`, roleData);
+//     return { success: true, data: response.data };
+//   } catch (error) {
+//     console.error('Error updating user roles:', error.response?.data || error);
+//     return { success: false, error: error.response?.data || 'Failed to update user roles' };
+//   }
+// };
+
+export const updateUserRole = async (id, userData) => {
   try {
-    const response = await apiClient.put(`/user-role-update/${id}/`, roleData);
-    return { success: true, data: response.data };
+    const response = await apiClient.patch(`/user-rolelist/${id}/`, userData);
+    return response.data;
   } catch (error) {
-    console.error('Error updating user roles:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to update user roles' };
+    console.error('Error updating user assigned role:', error);
+    throw error;
   }
 };
 
+
+export const getUserRole = async (id, userData) => {
+  try {
+    const response = await apiClient.get(`/user-rolelist/${id}/`, userData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user assigned role:', error);
+    throw error;
+  }
+};
 export const deleteUserRoles = async (id) => {
   try {
     const response = await apiClient.delete(`/user-role-delete/${id}/`);

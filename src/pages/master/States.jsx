@@ -1,154 +1,304 @@
 import React, { useEffect, useState } from "react";
-import { getStates, getCountries } from "helpers/apiHelper"; // Ensure correct import path
-import { Table, Typography, Spin, Alert, Button, Modal, Form, Input, Select } from "antd";
-import "antd/dist/reset.css";
+import {
+  Table,
+  Typography,
+  Spin,
+  Alert,
+  Button,
+  Modal,
+  Form,
+  Input,
+  message,
+  Select,
+  Pagination,
+  Row,
+  Col,
+  Popconfirm,
+} from "antd";
+import {
+  getStates,
+  addStates,
+  updateStates,
+  deleteStates,
+  getCountries,
+} from "helpers/apiHelper";
+
+const { Option } = Select;
+const { Search } = Input;
 
 const States = () => {
   const [states, setStates] = useState([]);
+  const [allStates, setAllStates] = useState([]);
   const [countries, setCountries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentState, setCurrentState] = useState(null);
   const [form] = Form.useForm();
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-  // Pagination states
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const pageSize = 10;
 
-  // Fetch states and handle pagination
-  const fetchStates = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    fetchCountries();
+    fetchAllStates();
+  }, []);
+
+  useEffect(() => {
+    filterStates();
+  }, [searchTerm, currentPage, allStates, countries]);
+
+  const fetchCountries = async () => {
     try {
-      const stateData = await getStates({ page }); // Ensure API supports pagination
-      const countryData = await getCountries();
-      setStates(Array.isArray(stateData.results) ? stateData.results : []);
-      setCountries(Array.isArray(countryData.results) ? countryData.results : []);
-      
-      // Set pagination info from API
-      setPagination((prev) => ({
-        ...prev,
-        current: page,
-        total: stateData.count || 0, // Total count from API response
-      }));
+      const res = await getCountries();
+      setCountries(res.results || []);
     } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to fetch data");
+      message.error("Failed to load countries");
+    }
+  };
+
+  const fetchAllStates = async () => {
+    setLoading(true);
+    try {
+      let page = 1;
+      let results = [];
+      let hasMore = true;
+      while (hasMore) {
+        const res = await getStates(`?page=${page}`);
+        results = [...results, ...(res.results || [])];
+        if (!res.next) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+      setAllStates(results);
+    } catch {
+      setError("Failed to fetch states");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchStates();
-  }, []);
+  const filterStates = () => {
+    let filtered = [...allStates];
+    if (searchTerm) {
+      filtered = filtered.filter((item) => {
+        const countryName = countries.find((c) => c.id === item.country)?.name || "";
+        return (
+          item.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          countryName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+    }
 
-  // Handle pagination change
-  const handleTableChange = (pagination) => {
-    fetchStates(pagination.current);
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    setStates(filtered.slice(start, end));
   };
 
-  // Open modal for adding a new state
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
   const handleAdd = () => {
-    setIsEditing(false);
-    setCurrentState(null);
     form.resetFields();
+    setIsEditing(false);
     setIsModalOpen(true);
   };
 
-  // Open modal for editing a state
   const handleEdit = (record) => {
-    setIsEditing(true);
     setCurrentState(record);
+    setIsEditing(true);
     form.setFieldsValue(record);
     setIsModalOpen(true);
   };
 
-  // Handle delete state
-  const handleDelete = (id) => {
-    setStates((prev) => prev.filter((item) => item.id !== id));
+  // const handleDelete = async (id) => {
+  //   if (!window.confirm("Are you sure to delete this state?")) return;
+  //   await deleteStates(id);
+  //   message.success("Deleted");
+  //   fetchAllStates();
+  // };
+
+    const handleDelete = async (id) => {
+      try {
+        await deleteStates(id);
+        message.success("Deleted successfully");
+        fetchAllStates();
+      } catch {
+        message.error("Failed to delete States");
+      }
+    };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm("Delete selected items?")) return;
+    await Promise.all(selectedRowKeys.map((id) => deleteStates(id)));
+    setSelectedRowKeys([]);
+    fetchAllStates();
   };
 
-  // Handle form submission (Add or Edit)
-  const handleFormSubmit = (values) => {
-    if (isEditing) {
-      setStates((prev) =>
-        prev.map((item) => (item.id === currentState.id ? { ...item, ...values } : item))
-      );
-    } else {
-      const newState = { id: states.length + 1, ...values };
-      setStates([...states, newState]);
+  const handleFormSubmit = async (values) => {
+    const data = {
+      state: values.state,
+      code: values.code,
+      country: values.country,
+    };
+
+    try {
+      if (isEditing) {
+        await updateStates(currentState.id, data);
+        message.success("State updated");
+      } else {
+        await addStates(data);
+        message.success("State added");
+      }
+      setIsModalOpen(false);
+      fetchAllStates();
+    } catch (err) {
+      message.error("Failed to save");
     }
-    setIsModalOpen(false);
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id" },
-    { title: "State Name", dataIndex: "state", key: "state" },
-    { title: "Code", dataIndex: "code", key: "code" },
-    { title: "Country", dataIndex: ["country", "name"], key: "country", render: (text) => text || "N/A" },
+    {
+      title: "ID",
+      key: "index",
+      width: "10%",
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
+    },
+    {
+      title: "State",
+      dataIndex: "state",
+      width: 200,
+      align: "left",
+    },
+    {
+      title: "Code",
+      dataIndex: "code",
+      width: 150,
+      align: "center",
+    },
+    {
+      title: "Country",
+      dataIndex: "country",
+      render: (id) => countries.find((c) => c.id === id)?.name || "N/A",
+      width: 200,
+      align: "center",
+    },
     {
       title: "Actions",
-      key: "actions",
       render: (_, record) => (
         <>
           <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button>
+           <Popconfirm
+                      title="Are you sure to delete this?"
+                      onConfirm={() => handleDelete(record.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="link" danger>Delete</Button>
+                    </Popconfirm>
         </>
       ),
+      width: 200,
+      align: "center",
     },
   ];
 
+  const totalFiltered = allStates.filter((item) => {
+    const countryName = countries.find((c) => c.id === item.country)?.name || "";
+    return (
+      item.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      countryName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }).length;
+
   return (
     <div>
-      <Typography.Title level={2}>States Management</Typography.Title>
-      
-      <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>
-        Add State
-      </Button>
+      <Typography.Title level={2}>States</Typography.Title>
 
-      {error && <Alert message={error} type="error" showIcon />}
-      
+      <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
+      <Col flex="auto">
+      <Search
+                    placeholder="Search by State, Code, or Country"
+                    allowClear
+                    enterButton
+                    onSearch={(value) => setSearchTerm(value)}
+                    onChange={(e) => {
+                      setCurrentPage(1);
+                      setSearchTerm(e.target.value);
+                    }}
+                    style={{ width: 550 }}
+                  />
+        </Col>
+        <Col>
+          <Button type="primary" onClick={handleAdd}>Add State</Button>
+        </Col>
+        <Col>
+          <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
+            Delete Selected
+          </Button>
+        </Col>
+      </Row>
+
+      {error && <Alert type="error" message={error} />}
       {loading ? (
-        <Spin size="large" />
+        <Spin />
       ) : (
-        <Table
-          dataSource={states}
-          columns={columns}
-          rowKey="id"
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: false, // Optional: Hide page size changer
-          }}
-          onChange={handleTableChange} // Triggers pagination updates
-        />
+        <>
+          <Table
+            rowKey="id"
+            columns={columns}
+            dataSource={states}
+            pagination={false}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+            }}
+          />
+          <Row justify="end" style={{ marginTop: 16 }}>
+            <Col>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalFiltered}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+              />
+            </Col>
+          </Row>
+        </>
       )}
 
-      {/* Modal for Add/Edit */}
       <Modal
         title={isEditing ? "Edit State" : "Add State"}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
+        okText={isEditing ? "Update" : "Add"}
       >
-        <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-          <Form.Item name="state" label="State Name" rules={[{ required: true, message: "Please enter state name" }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="code" label="State Code" rules={[{ required: true, message: "Please enter state code" }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="country" label="Country" rules={[{ required: true, message: "Please select a country" }]}>
-            <Select placeholder="Select a country">
+        <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
+          <Form.Item name="country" label="Country" rules={[{ required: true }]}>
+            <Select placeholder="Select country">
               {countries.map((country) => (
-                <Select.Option key={country.id} value={country.id}>
+                <Option key={country.id} value={country.id}>
                   {country.name}
-                </Select.Option>
+                </Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item name="state" label="State Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="code" label="State Code" rules={[{ required: true }]}>
+            <Input />
           </Form.Item>
         </Form>
       </Modal>

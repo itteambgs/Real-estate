@@ -22,7 +22,7 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 const Countries = Loadable(lazy(() => import('pages/master/Countries')));
 const States = Loadable(lazy(() => import('pages/master/States')));
 const Cities = Loadable(lazy(() => import('pages/master/Cities')));
-const Properties = Loadable(lazy(() => import('pages/master/Properties')));
+const Properties = Loadable(lazy(() => import('pages/master/property/Properties')));
 const Document = Loadable(lazy(() => import('pages/master/Document')));
 const OwnershipType = Loadable(lazy(() => import('pages/master/OwnershipType')));
 const BHKType = Loadable(lazy(() => import('pages/master/BHKType')));
@@ -45,9 +45,10 @@ const CreateRolePage = Loadable(lazy(() => import('pages/role/CreateRolePage')))
 
 const EditRolePage = Loadable(lazy(() => import('pages/role/EditRolePage')));
 
-const UserRole = Loadable(lazy(() => import('pages/User/UserRole')));
+const IndexUser = Loadable(lazy(() => import('pages/User/IndexUser')));
 
-
+const AddUser = Loadable(lazy(() => import('pages/user/AddUser')));
+const EditUser = Loadable(lazy(() => import('pages/user/EditUser')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -123,8 +124,17 @@ const MainRoutes = {
         },
         {
           path: 'user-role',
-          element: <UserRole />
+          element: <IndexUser />
         },
+
+         {
+          path: 'add-user',
+          element: <AddUser />
+        },
+        {
+          path: 'edit-user/:id',
+          element: <EditUser />
+        }
        
         
       ]

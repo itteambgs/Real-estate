@@ -1,7 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { getCountries } from "helpers/apiHelper"; // Ensure correct import path
-import { Table, Typography, Spin, Alert, Button, Modal, Form, Input } from "antd";
+import {
+  getCountries,
+  addCountries,
+  updateCountries,
+  deleteCountries,
+} from "helpers/apiHelper";
+import {
+  Table,
+  Typography,
+  Spin,
+  Alert,
+  Button,
+  Modal,
+  Form,
+  Input,
+  message,
+  Row,
+  Col,
+  Popconfirm,
+} from "antd";
 import "antd/dist/reset.css";
+
+const { Search } = Input;
 
 const Countries = () => {
   const [countries, setCountries] = useState([]);
@@ -11,28 +31,33 @@ const Countries = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentCountry, setCurrentCountry] = useState(null);
   const [form] = Form.useForm();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   useEffect(() => {
-    const fetchCountries = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getCountries();
-        console.log("Fetched Countries:", data);
-        setCountries(Array.isArray(data.results) ? data.results : []);
-      } catch (err) {
-        console.error("Error fetching countries:", err);
-        setError("Failed to fetch countries");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCountries();
-  }, []);
+  }, [searchTerm]);
 
-  // Open modal for adding a new country
+  const fetchCountries = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getCountries();
+      const allCountries = Array.isArray(data.results) ? data.results : [];
+      const filtered = allCountries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.code.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setCountries(filtered);
+    } catch (err) {
+      console.error("Error fetching countries:", err);
+      setError("Failed to fetch countries");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAdd = () => {
     setIsEditing(false);
     setCurrentCountry(null);
@@ -40,7 +65,6 @@ const Countries = () => {
     setIsModalOpen(true);
   };
 
-  // Open modal for editing a country
   const handleEdit = (record) => {
     setIsEditing(true);
     setCurrentCountry(record);
@@ -48,70 +72,162 @@ const Countries = () => {
     setIsModalOpen(true);
   };
 
-  // Handle delete country
-  const handleDelete = (id) => {
-    setCountries((prev) => prev.filter((item) => item.id !== id));
+  // const handleDelete = async (id) => {
+  //   if (!window.confirm("Are you sure you want to delete this country?")) return;
+  //   const response = await deleteCountries(id);
+  //   if (response.success) {
+  //     setCountries((prev) => prev.filter((item) => item.id !== id));
+  //     message.success("Country deleted successfully");
+  //   } else {
+  //     message.error(`Delete failed: ${response.error}`);
+  //   }
+  // };
+
+
+    const handleDelete = async (id) => {
+        try {
+          await deleteCountries(id);
+          setCountries((prev) => prev.filter((item) => item.id !== id));
+          message.success("Deleted successfully");
+        } catch {
+          message.error("Failed to delete ownership type");
+        }
+      };
+
+
+
+  const handleBulkDelete = async () => {
+    if (!selectedRowKeys.length) return;
+    if (!window.confirm("Delete selected countries?")) return;
+    await Promise.all(selectedRowKeys.map((id) => deleteCountries(id)));
+    setSelectedRowKeys([]);
+    fetchCountries();
+    message.success("Selected countries deleted.");
   };
 
-  // Handle form submission (Add or Edit)
-  const handleFormSubmit = (values) => {
+  const handleFormSubmit = async (values) => {
     if (isEditing) {
-      // Edit logic (for now, just updating UI)
-      setCountries((prev) =>
-        prev.map((item) => (item.id === currentCountry.id ? { ...item, ...values } : item))
-      );
+      const response = await updateCountries(currentCountry.id, values);
+      if (response.success) {
+        setCountries((prev) =>
+          prev.map((item) =>
+            item.id === currentCountry.id ? response.data : item
+          )
+        );
+        message.success("Country updated successfully");
+      } else {
+        message.error(`Update failed: ${response.error}`);
+      }
     } else {
-      // Add logic (for now, just adding to UI)
-      const newCountry = { id: countries.length + 1, ...values };
-      setCountries([...countries, newCountry]);
+      const response = await addCountries(values);
+      if (response.success) {
+        setCountries([...countries, response.data]);
+        message.success("Country added successfully");
+      } else {
+        message.error(`Add failed: ${response.error}`);
+      }
     }
     setIsModalOpen(false);
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id" },
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Code", dataIndex: "code", key: "code" },
+    // { title: "ID", dataIndex: "id", key: "id", width: '20%' },
+    {
+      title: "ID",
+      key: "index",
+      width: "10%",
+      render: (text, record, index) => index + 1,
+    },
+    { title: "Name", dataIndex: "name", key: "name", width: '30%' },
+    { title: "Code", dataIndex: "code", key: "code", width: '30%' },
     {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
         <>
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Edit
-          </Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>
-            Delete
-          </Button>
+          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+           <Popconfirm
+                      title="Are you sure to delete this?"
+                      onConfirm={() => handleDelete(record.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="link" danger>Delete</Button>
+                    </Popconfirm>
         </>
       ),
+      width: '30%',
     },
   ];
 
   return (
     <div>
-      <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>
-        Add Country
-      </Button>
-      {error && <Alert message={error} type="error" showIcon />}
+      <Typography.Title level={2}>Countries</Typography.Title>
+
+      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+        <Col>
+          <Search
+            placeholder="Search by name or code"
+            allowClear
+            enterButton
+            onSearch={(value) => setSearchTerm(value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: 550 }}
+          />
+        </Col>
+        <Col>
+          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
+            Add Country
+          </Button>
+          <Button
+            danger
+            onClick={handleBulkDelete}
+            disabled={!selectedRowKeys.length}
+          >
+            Delete Selected
+          </Button>
+        </Col>
+      </Row>
+
+      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
+
       {loading ? (
-        <Spin size="large" />
+        <div style={{ textAlign: "center", marginTop: 50 }}>
+          <Spin size="large" />
+        </div>
       ) : (
-        <Table dataSource={countries} columns={columns} rowKey="id" />
+        <Table
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+          }}
+          dataSource={countries}
+          columns={columns}
+          rowKey="id"
+          scroll={{ x: '100%' }}
+        />
       )}
 
-      {/* Modal for Add/Edit */}
       <Modal
         title={isEditing ? "Edit Country" : "Add Country"}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
+        okText={isEditing ? "Update" : "Add"}
       >
         <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-          <Form.Item name="name" label="Country Name" rules={[{ required: true, message: "Please enter country name" }]}>
+          <Form.Item
+            name="name"
+            label="Country Name"
+            rules={[{ required: true, message: "Please enter country name" }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="code" label="Country Code" rules={[{ required: true, message: "Please enter country code" }]}>
+          <Form.Item
+            name="code"
+            label="Country Code"
+            rules={[{ required: true, message: "Please enter country code" }]}
+          >
             <Input />
           </Form.Item>
         </Form>

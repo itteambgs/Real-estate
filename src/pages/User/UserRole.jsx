@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Button, message, Spin, Space } from 'antd';
+import { Select, Button, message, Spin, Card, Typography, Divider } from 'antd';
 import { getUsers, getRoles, assignRoleToUser } from 'helpers/apiHelper';
+
+const { Title, Text } = Typography;
 
 function UserRole() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [selectedRoles, setSelectedRoles] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -14,78 +16,87 @@ function UserRole() {
       setLoading(true);
       try {
         const [userList, roleList] = await Promise.all([getUsers(), getRoles()]);
-        console.log("Users API response:", userList);
-        console.log("Roles API response:", roleList);
-  
-        // Ensure arrays before setting state
         setUsers(Array.isArray(userList.results) ? userList.results : []);
-
         setRoles(Array.isArray(roleList) ? roleList : []);
       } catch (error) {
-        console.error(error);
         message.error('Failed to load users or roles');
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
-  
 
   const handleAssignRole = async () => {
-    if (!selectedUser || !selectedRole) {
-      message.error('Please select both user and role');
+    if (!selectedUser || selectedRoles.length === 0) {
+      message.error('Please select a user and at least one role.');
       return;
     }
 
     setLoading(true);
     try {
-      const result = await assignRoleToUser(selectedUser, selectedRole);
+      const result = await assignRoleToUser(selectedUser, selectedRoles);
       if (result) {
-        message.success('Role assigned successfully');
+        message.success('Roles assigned successfully');
+        setSelectedRoles([]);
       } else {
-        message.error('Failed to assign role');
+        message.error('Failed to assign roles');
       }
     } catch (err) {
       console.error(err);
-      message.error('Error assigning role');
+      message.error('Error assigning roles');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Assign Role to User</h2>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {loading && <Spin />}
+    <div style={{ maxWidth: 600, margin: '2rem auto' }}>
+      <Card bordered hoverable bodyStyle={{ minHeight: '300px' }}>
+        <Title level={4}>Assign Role to User</Title>
+        <Text>Select a user to begin:</Text>
         <Select
-          placeholder="Select User"
+          placeholder="Select a user"
           onChange={setSelectedUser}
-          options={users.map(user => ({ label: user.username || user.name, value: user.id }))}
+          options={users.map(user => ({
+            label: `${user.first_name} `,
+            value: user.id,
+          }))}
           value={selectedUser}
+          style={{ width: '100%', marginTop: '1rem' }}
           disabled={loading}
-        />
-            <Select
-        mode="multiple"
-        placeholder="Select Role(s)"
-        value={selectedRole}
-        onChange={setSelectedRole}
-        options={roles.map(r => ({ label: r.name, value: r.id }))}
-        style={{ width: '100%' }}
-        disabled={loading}
         />
 
-        <Button
-          type="primary"
-          onClick={handleAssignRole}
-          disabled={loading}
-          loading={loading}
-        >
-          Assign Role
-        </Button>
-      </Space>
+        {selectedUser && (
+          <>
+            <Divider />
+            <Text>Select role(s):</Text>
+            <div style={{ maxHeight: '80px', overflowY: 'auto' }}>
+              <Select
+                mode="multiple"
+                placeholder="Select role(s)"
+                value={selectedRoles}
+                onChange={setSelectedRoles}
+                options={roles.map(role => ({ label: role.name, value: role.id }))}
+                style={{ width: '100%' }}
+                disabled={loading}
+                maxTagCount={2}
+              />
+            </div>
+            <Button
+              type="primary"
+              block
+              style={{ marginTop: '1rem' }}
+              onClick={handleAssignRole}
+              loading={loading}
+            >
+              Assign Role(s)
+            </Button>
+          </>
+        )}
+      </Card>
+      {loading && <div style={{ textAlign: 'center', marginTop: 20 }}><Spin /></div>}
     </div>
   );
 }

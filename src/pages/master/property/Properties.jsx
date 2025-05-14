@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getProperties, addProperty, updateProperty, deleteProperty } from "helpers/apiHelper";
+import { getProperties, addProperty, updateProperty, deleteProperty, getDropdownOptions } from "helpers/apiHelper";
 import { Table, Typography, Spin, Alert, Button, Modal, Form, Input, message } from "antd";
 import "antd/dist/reset.css";
+import ListProperty from "./ListProperty";
+import CreateProperty from "./CreateProperty";
 
 const Properties = () => {
   const [properties, setProperties] = useState([]);
@@ -11,6 +13,9 @@ const Properties = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentProperty, setCurrentProperty] = useState(null);
   const [form] = Form.useForm();
+
+  const [formData, setFormData] = useState({});  // Define formData state
+  const [dropdownOptions, setDropdownOptions] = useState({});  // Define state for dropdown options
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -26,6 +31,19 @@ const Properties = () => {
       }
     };
     fetchProperties();
+  }, []);
+
+  useEffect(() => {
+    // Fetch dropdown options for select fields
+    const fetchDropdownOptions = async () => {
+      try {
+        const options = await getDropdownOptions();
+        setDropdownOptions(options);
+      } catch (err) {
+        setError("Failed to fetch dropdown options");
+      }
+    };
+    fetchDropdownOptions();
   }, []);
 
   const handleAdd = () => {
@@ -101,8 +119,6 @@ const Properties = () => {
   return (
     <div>
       <h1>Properties</h1>
-     
-
       <Button type="primary" onClick={handleAdd} style={{ marginBottom: 16 }}>
         Add Property
       </Button>
@@ -112,9 +128,9 @@ const Properties = () => {
       {loading ? (
         <Spin size="large" />
       ) : (
-        <Table 
-          dataSource={properties} 
-          columns={columns} 
+        <Table
+          dataSource={properties}
+          columns={columns}
           rowKey="id"
           scroll={{ x: "max-content" }}
         />
@@ -130,10 +146,10 @@ const Properties = () => {
           {Object.keys(properties[0] || {})
             .filter((key) => !["id", "added_by", "last_edited_by"].includes(key)) // Exclude these fields
             .map((key) => (
-              <Form.Item 
-                key={key} 
-                name={key} 
-                label={key.replace(/_/g, " ").toUpperCase()} 
+              <Form.Item
+                key={key}
+                name={key}
+                label={key.replace(/_/g, " ").toUpperCase()}
                 rules={[{ required: key === "property_name", message: "Property Name is required" }]}
               >
                 <Input />
@@ -141,6 +157,15 @@ const Properties = () => {
             ))}
         </Form>
       </Modal>
+      <ListProperty />
+      <CreateProperty
+        formData={formData}
+        setFormData={setFormData}  // Pass setFormData
+        handleSubmit={handleFormSubmit}  // Pass submit handler
+        loading={loading}
+        error={error}
+        dropdownOptions={dropdownOptions} // Pass dropdown options
+      />
     </div>
   );
 };

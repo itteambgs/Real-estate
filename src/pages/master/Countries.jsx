@@ -164,30 +164,44 @@ const Countries = () => {
     <div>
       <Typography.Title level={2}>Countries</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by name or code"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add Country
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+  {/* Search Field */}
+  <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by name or code"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{ width: '100%' }}
+    />
+  </Col>
+
+  {/* Buttons */}
+  <Col xs={24} sm={24} md={8}>
+    <Row gutter={[8, 8]} justify="end">
+      <Col xs={24} sm={12}>
+        <Button
+          type="primary"
+          block
+          onClick={handleAdd}
+        >
+          Add Country
+        </Button>
+      </Col>
+      <Col xs={24} sm={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+          Delete Selected
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 

@@ -14,7 +14,7 @@ import {
   Popconfirm,
 } from "antd";
 import {
-  getownership,
+  getOwnership,
   addOwnershipType,
   updateOwnershipType,
   deleteOwnershipType,
@@ -40,7 +40,7 @@ const OwnershipType = () => {
   const fetchOwnershipTypes = async () => {
     setLoading(true);
     try {
-      const data = await getownership();
+      const data = await getOwnership();
       const results = Array.isArray(data.results) ? data.results : [];
 
       const filtered = results.filter((item) =>

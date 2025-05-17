@@ -296,16 +296,22 @@ export const deleteBHKType = async (id) => {
 // ===========================x=========================
 // This API list All OwnershipType to the system
 
-//getownership
-export const getownership = async () => {
+// getownership
+export const getOwnership = async () => {
   try {
     const response = await apiClient.get('/ownership-types/');
     return response.data;
   } catch (error) {
-    console.error('Error fetching ownership:', error.response?.data || error.message);
-    return [];
+    console.error("Error fetching ownership:", error);
+    throw error;
+    // return [];
   }
 };
+
+
+
+
+
 
 // addOwnershipType
 export const addOwnershipType = async (data) => {
@@ -384,15 +390,20 @@ export const deleteDocumentType = async (id) => {
 // ===========================x=========================
 // This API list All Property Types to the system
 
-// Get all Property Types
-export const getPropertyTypes = async () => {
-  try {
-    const response = await apiClient.get('/property-types/');
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching property types:", error);
-    throw error;
-  }
+// export const getPropertyTypes = async () => {
+//   try {
+//     const response = await apiClient.get('/property-types/');
+//     return response.data; // <-- What is the structure here?
+//   } catch (error) {
+//     console.error('Error fetching property types:', error);
+//     return [];
+//   }
+// };
+
+// getCities
+export const getPropertyTypes = async (query = "") => {
+  const response = await apiClient.get(`/property-types/${query}`);
+  return response.data; // Should return: [{ id: 1, name: "Residential" }, ...]
 };
 
 // Add a new Property Type
@@ -425,48 +436,69 @@ export const deletePropertyType = async (id) => {
   }
 };
 
+// ===========================x=========================
+// This API list All States to the system
 
-
-
+// get Properties
 export const getProperties = async () => {
   try {
     const response = await apiClient.get('/properties/');
     return response.data;
   } catch (error) {
-    console.error('Error fetching properties:', error.response?.data || error.message);
+    console.error('Error fetching properties:', error);
     return [];
   }
 };
 
-export const addProperty = async (propertyData) => {
+
+// Add a new Property 
+export const addProperty = async (data) => {
   try {
-    const response = await apiClient.post('/properties/', propertyData);
+    const response = await apiClient.post("/properties/", data);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error adding property:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to add property' };
+    return { success: false, error: error.response?.data || error };
   }
 };
 
+// update Property
 export const updateProperty = async (id, propertyData) => {
   try {
     const response = await apiClient.put(`/properties/${id}/`, propertyData);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error updating property:', error.response?.data || error);
+    console.error('Error updating property:', error);
     return { success: false, error: error.response?.data || 'Failed to update property' };
   }
 };
-
+//  delete Property
 export const deleteProperty = async (id) => {
   try {
     await apiClient.delete(`/properties/${id}/`);
     return { success: true };
   } catch (error) {
-    console.error('Error deleting property:', error.response?.data || error);
+    console.error('Error deleting property:', error);
     return { success: false, error: error.response?.data || 'Failed to delete property' };
   }
 };
+
+//getownership
+// export const getownership = async () => {
+//   try {
+//     const response = await apiClient.get('/ownership-types/');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching ownership:', error.response?.data || error.message);
+//     return [];
+//   }
+// };
+
+
+
+
+
+
+
 
 
 
@@ -598,15 +630,15 @@ export const getRolePermissions = async (roleId) => {
 
 
 // BHK TYPE
-export const getbhktype = async () => {
-  try {
-    const response = await apiClient.get('/bhk-types/');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching bhk type:', error);
-    return [];
-  }
-};
+// export const getbhktype = async () => {
+//   try {
+//     const response = await apiClient.get('/bhk-types/');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching bhk type:', error);
+//     return [];
+//   }
+// };
 
 
 

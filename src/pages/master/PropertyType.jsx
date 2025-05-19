@@ -117,9 +117,10 @@ const PropertyType = () => {
       key: "index",
       width: "10%",
       render: (text, record, index) => index + 1,
+      
     },
-    { title: "Code", dataIndex: "code", key: "code", width: "30%" },
-    { title: "Property Type", dataIndex: "type_name", key: "type_name", width: "30%" },
+    { title: "Code", dataIndex: "code", key: "code", width: 200, },
+    { title: "Property Type", dataIndex: "type_name", key: "type_name", width: 200, },
     {
       title: "Actions",
       key: "actions",
@@ -136,7 +137,7 @@ const PropertyType = () => {
           </Popconfirm>
         </>
       ),
-      width: "30%",
+      width: 200,
     },
   ];
 
@@ -144,30 +145,44 @@ const PropertyType = () => {
     <div>
       <Typography.Title level={2}>Property Types</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by Code or Property Type"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add Property Type
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+      <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by Code or Property Type"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{ width: '100%' }}
+    />
+  </Col>
+
+  {/* Buttons - stacked on small screens, inline on medium+ */}
+  <Col xs={24} sm={24} md={8}>
+     <Row gutter={[8, 8]} justify="end">
+       <Col xs={24} sm={12} md={12}>
+        <Button
+          type="primary"
+          block
+          onClick={handleAdd}
+        >
+          Add Property Type
+        </Button>
+      </Col>
+      <Col xs={24} sm={12} md={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
+
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
@@ -184,6 +199,9 @@ const PropertyType = () => {
           dataSource={propertyTypes}
           columns={columns}
           rowKey="id"
+           scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 10 }}
+          
         />
       )}
 

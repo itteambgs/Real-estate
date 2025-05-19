@@ -119,12 +119,12 @@ const OwnershipType = () => {
       width: "10%",
       render: (text, record, index) => index + 1,
     },
-    { title: "Code", dataIndex: "code", key: "code", width: "30%" },
-    { title: "Ownership Type", dataIndex: "ownership_type", key: "ownership_type", width: "30%" },
+    { title: "Code", dataIndex: "code", key: "code", width: 200, },
+    { title: "Ownership Type", dataIndex: "ownership_type", key: "ownership_type", width: 200, },
     {
       title: "Actions",
       key: "actions",
-      width: "30%",
+      width: 200,
       render: (_, record) => (
         <>
           <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
@@ -138,6 +138,8 @@ const OwnershipType = () => {
           </Popconfirm>
         </>
       ),
+      align: "center",
+      width: 200,
     },
   ];
 
@@ -145,30 +147,42 @@ const OwnershipType = () => {
     <div>
       <Typography.Title level={2}>Ownership Types</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by Code or Ownership Type"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add Ownership Type
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+     <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+       <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by Code or Ownership Type"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{ width: "100%" }}
+    />
+  </Col>
+  <Col xs={24} sm={24} md={8}>
+      <Row gutter={[8, 8]} justify="end">
+        <Col xs={24} sm={12} md={12}>
+        <Button
+          type="primary"
+          block
+          onClick={handleAdd}
+        >
+          Add Ownership Type
+        </Button>
+      </Col>
+      <Col xs={24} sm={12} md={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+          Delete Selected
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
+
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
@@ -185,6 +199,8 @@ const OwnershipType = () => {
           dataSource={ownershipTypes}
           columns={columns}
           rowKey="id"
+          scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 10 }}
         />
       )}
 

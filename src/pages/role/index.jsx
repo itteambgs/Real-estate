@@ -1,66 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getRoles, deleteRole } from '../../helpers/apiHelper';
 import RoleList from './RoleList';
-import CreateRole from './CreateRole';
-import EditRole from './EditRole';
-import { getRoles } from '../../helpers/apiHelper';
+import { Typography, Button, message } from 'antd';
+
+const { Title } = Typography;
 
 const RolePage = () => {
+  const navigate = useNavigate();
   const [roles, setRoles] = useState([]);
-  const [editingRole, setEditingRole] = useState(null);
-  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
-    const fetchRoles = async () => {
-      const data = await getRoles();
-      setRoles(data);
-    };
-    fetchRoles();
+    loadRoles();
   }, []);
 
-  const handleAdd = (newRole) => {
-    setRoles([...roles, newRole]);
-    setShowCreate(false);
+  const loadRoles = async () => {
+    const rolesData = await getRoles();
+    setRoles(Array.isArray(rolesData) ? rolesData : []);
   };
 
-  const handleUpdate = (updatedRole) => {
-    setRoles(roles.map(r => (r.id === updatedRole.id ? updatedRole : r)));
-    setEditingRole(null);
+  const handleEdit = (role) => {
+    navigate(`/role/edit/${role.id}`);
   };
 
-  const handleDelete = (id) => {
-    setRoles(roles.filter(role => role.id !== id));
+  const handleDelete = async (roleId) => {
+    const response = await deleteRole(roleId);
+    if (response.success) {
+      message.success('Role deleted');
+      loadRoles(); // Refresh the list
+    } else {
+      message.error(response.error || 'Failed to delete role');
+    }
   };
 
   return (
-    <div style={{ padding: '0rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>User Role Management</h1>
-        <button
-          onClick={() => {
-            setEditingRole(null);
-            setShowCreate(true);
-          }}
-          className="edit-btn"
-        >
-          Add
-        </button>
+    <div style={{ padding: '1rem' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem'
+      }}>
+        <Title level={2} style={{ margin: 0 }}>Role Management</Title>
+        <Button type="primary" onClick={() => navigate('/role/create')}>
+          + Add Role
+        </Button>
       </div>
 
-      <RoleList
-        roles={roles}
-        onEdit={(role) => {
-          setEditingRole(role);
-          setShowCreate(false);
-        }}
-        onDelete={handleDelete}
-      />
-
-      <CreateRole
-        isOpen={showCreate}
-        onClose={() => setShowCreate(false)}
-        onSubmit={handleAdd}
-      />
-      {editingRole && <EditRole role={editingRole} onSubmit={handleUpdate} />}
+      <RoleList roles={roles} onEdit={handleEdit} onDelete={handleDelete} />
     </div>
   );
 };

@@ -251,7 +251,7 @@ const Cities = () => {
           onClick={handleBulkDelete}
           disabled={!selectedRowKeys.length}
         >
-          Delete Selected
+         Delete Selected ({selectedRowKeys.length})
         </Button>
       </Col>
     </Row>
@@ -264,6 +264,7 @@ const Cities = () => {
       ) : (
         <>
           <Table
+          scroll={{ x: "max-content" }}
             rowKey="id"
             columns={columns}
             dataSource={cities}

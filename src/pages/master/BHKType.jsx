@@ -93,25 +93,13 @@ const BHKType = () => {
     };
 
    const handleBulkDelete = async () => {
-     if (selectedRowKeys.length) return;
-     Modal.confirm({
-       title: "Are you sure?",
-       content: `Delete ${selectedRowKeys.length} selected properties?`,
-       okText: "Yes, delete",
-       okType: "danger",
-       cancelText: "Cancel",
-       onOk: async () => {
-         try {
-           await Promise.all(selectedRowKeys.map((id) => deleteProperty(id)));
-           message.success("Selected properties deleted");
-           setSelectedRowKeys([]);
-           fetchAllProperties();
-         } catch {
-           message.error("Failed to delete selected properties");
-         }
-       },
-     });
-   };
+    if (!selectedRowKeys.length) return;
+    if (!window.confirm("Delete selected BHK types?")) return;
+    await Promise.all(selectedRowKeys.map((id) => deleteBHKType(id)));
+    setSelectedRowKeys([]);
+    fetchBHKTypes();
+    message.success("Deleted selected items");
+  };
 
   const handleFormSubmit = async (values) => {
     if (isEditing) {
@@ -144,8 +132,8 @@ const BHKType = () => {
       width: "10%",
       render: (text, record, index) => index + 1,
     },
-    { title: "Name", dataIndex: "name", key: "name", width: '30%' },
-    { title: "BHK Type", dataIndex: "bhk_type", key: "bhk_type", width: '30%'},
+    { title: "Name", dataIndex: "name", key: "name", width: 200 },
+    { title: "BHK Type", dataIndex: "bhk_type", key: "bhk_type", width: 200},
     {
       title: "Actions",
       key: "actions",
@@ -163,7 +151,7 @@ const BHKType = () => {
           </Popconfirm>
         </>
       ),
-      width: '30%',
+      width: 200,
     },
   ];
 
@@ -221,6 +209,7 @@ const BHKType = () => {
           columns={columns}
           rowKey="id"
           scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 10 }}
         />
       )}
 

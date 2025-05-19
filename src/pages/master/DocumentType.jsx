@@ -118,8 +118,8 @@ const DocumentType = () => {
       width: "10%",
       render: (text, record, index) => index + 1,
     },
-    { title: "Code", dataIndex: "code", key: "code", width: "30%" },
-    { title: "Document Type", dataIndex: "document_type", key: "document_type", width: "30%" },
+    { title: "Code", dataIndex: "code", key: "code", width: 200, },
+    { title: "Document Type", dataIndex: "document_type", key: "document_type", width: 200, },
     {
       title: "Actions",
       key: "actions",
@@ -136,38 +136,48 @@ const DocumentType = () => {
           </Popconfirm>
         </>
       ),
-      width: "30%",
+      width: 200,
     },
   ];
 
   return (
     <div>
       <Typography.Title level={2}>Document Types</Typography.Title>
-
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by Code or Document Type"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add Document Type
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+<Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+    <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by Code or Ownership Type"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{ width: "100%" }}
+    />
+  </Col>
+ <Col xs={24} sm={24} md={8}>
+    <Row gutter={[8, 8]} justify="end">
+      <Col xs={24} sm={12} md={12}>
+        <Button
+          type="primary"
+          block
+          onClick={handleAdd}
+        >
+          Add Ownership Type
+        </Button>
+      </Col>
+      <Col xs={24} sm={12} md={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+         Delete Selected ({selectedRowKeys.length})
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
@@ -184,6 +194,7 @@ const DocumentType = () => {
           dataSource={documentTypes}
           columns={columns}
           rowKey="id"
+           scroll={{ x: "max-content" }}
         />
       )}
 

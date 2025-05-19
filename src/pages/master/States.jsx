@@ -224,29 +224,44 @@ const States = () => {
     <div>
       <Typography.Title level={2}>States</Typography.Title>
 
-      <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
-      <Col flex="auto">
-      <Search
-                    placeholder="Search by State, Code, or Country"
-                    allowClear
-                    enterButton
-                    onSearch={(value) => setSearchTerm(value)}
-                    onChange={(e) => {
-                      setCurrentPage(1);
-                      setSearchTerm(e.target.value);
-                    }}
-                    style={{ width: 550 }}
-                  />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd}>Add State</Button>
-        </Col>
-        <Col>
-          <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+ <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 20 }}>
+  {/* Search Field */}
+  <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by State, Code, or Country"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => {
+        setCurrentPage(1);
+        setSearchTerm(e.target.value);
+      }}
+      style={{ width: '100%' }}
+    />
+  </Col>
+
+  {/* Action Buttons */}
+    <Col xs={24} sm={24} md={8}>
+    <Row gutter={[8, 8]} justify="end">
+      <Col xs={24} sm={12}>
+        <Button type="primary" block onClick={handleAdd}>
+          Add State
+        </Button>
+      </Col>
+      <Col xs={24} sm={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
+
 
       {error && <Alert type="error" message={error} />}
       {loading ? (
@@ -254,6 +269,8 @@ const States = () => {
       ) : (
         <>
           <Table
+          
+          scroll={{ x: "max-content" }}
             rowKey="id"
             columns={columns}
             dataSource={states}

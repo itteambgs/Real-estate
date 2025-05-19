@@ -8,7 +8,7 @@ import {
   getBHKTypes,
   getStates,
   getCountries,
-  getownership,
+  getOwnership,
   getPropertyTypes,
   getUsers,
 } from "helpers/apiHelper";
@@ -25,6 +25,7 @@ import {
   Row,
   Col,
   Select,
+  Popconfirm,
 } from "antd";
 import "antd/dist/reset.css";
 
@@ -69,7 +70,7 @@ const Properties = () => {
         getCities(),
         getStates(),
         getCountries(),
-        getownership(),
+        getOwnership(),
         getPropertyTypes(),
         getUsers(),
         getBHKTypes(),
@@ -77,8 +78,8 @@ const Properties = () => {
       setCities(cRes.results || []);
       setStates(sRes.results || []);
       setCountries(cnRes.results || []);
-      setOwnershipTypes(Array.isArray(oRes?.results) ? oRes.results : Array.isArray(oRes) ? oRes : []);
-      setPropertyTypes(Array.isArray(pRes?.results) ? pRes.results : Array.isArray(pRes) ? pRes : []);
+      setOwnershipTypes(oRes.results || []);
+      setPropertyTypes(pRes.results || []);
       setUsers(uRes.results || []);
       setBhkTypes(bRes.results || []);
     } catch (err) {
@@ -136,24 +137,16 @@ const Properties = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedRowKeys.length) return;
-    Modal.confirm({
-      title: "Are you sure?",
-      content: `Delete ${selectedRowKeys.length} selected properties?`,
-      okText: "Yes, delete",
-      okType: "danger",
-      cancelText: "Cancel",
-      onOk: async () => {
-        try {
-          await Promise.all(selectedRowKeys.map((id) => deleteProperty(id)));
-          message.success("Selected properties deleted");
-          setSelectedRowKeys([]);
-          fetchAllProperties();
-        } catch {
-          message.error("Failed to delete selected properties");
-        }
-      },
-    });
+    if (!selectedRowKeys.length) return;
+    if (!window.confirm("Delete selected properties?")) return;
+    try {
+      await Promise.all(selectedRowKeys.map((id) => deleteProperty(id)));
+      setSelectedRowKeys([]);
+      message.success("Selected properties deleted.");
+      fetchAllProperties();
+    } catch (error) {
+      message.error("Failed to delete selected properties.");
+    }
   };
 
   const handleAdd = () => {
@@ -202,32 +195,39 @@ const Properties = () => {
   ];
 
   const columns = [
-  {
-    title: "No",
-    dataIndex: "serial",
-    key: "serial",
-    render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
-  },
-  ...displayFields.map((key) => ({
-    title: key
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase()), // Capitalized Case
-    dataIndex: key,
-    key,
-    render: (text) => (text ? text.toString() : "-"),
-  })),
-  {
-    title: "Actions",
-    key: "actions",
-    render: (_, record) => (
-      <>
-        <Button type="link" onClick={() => handleView(record)}>View</Button>
-        <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-        <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button>
-      </>
-    ),
-  },
-];
+    {
+      title: "No",
+      dataIndex: "serial",
+      key: "serial",
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
+    },
+    ...displayFields.map((key) => ({
+      title: key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase()),
+      dataIndex: key,
+      key,
+      render: (text) => (text ? text.toString() : "-"),
+    })),
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <>
+          <Button type="link" onClick={() => handleView(record)}>View</Button>
+          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+          <Popconfirm
+            title="Are you sure to delete this?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" danger>Delete</Button>
+          </Popconfirm>
+        </>
+      ),
+    },
+  ];
 
   const rowSelection = {
     selectedRowKeys,
@@ -237,27 +237,40 @@ const Properties = () => {
   return (
     <div>
       <Typography.Title level={3}>Properties</Typography.Title>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-      <Col>
-      <Search
-        placeholder="Search by property name	"
-        allowClear
-        enterButton
-        onSearch={(value) => setSearchTerm(value)}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ width: 550 }}
-      />
-</Col>  
-      <Col>
-          
-           <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>Add Property </Button>
-       
-        
-          <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
-            Delete Selected ({selectedRowKeys.length})
-          </Button>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        <Col xs={24} sm={24} md={16}>
+          <Search
+            placeholder="Search by property name"
+            allowClear
+            enterButton
+            onSearch={(value) => setSearchTerm(value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </Col>
+
+        <Col xs={24} sm={24} md={8}>
+          <Row gutter={[8, 8]} justify="end">
+            <Col xs={24} sm={12} md={12}>
+              <Button type="primary" block onClick={handleAdd}>
+                Add Property
+              </Button>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Button
+                danger
+                block
+                onClick={handleBulkDelete}
+                disabled={!selectedRowKeys.length}
+              >
+                Delete Selected ({selectedRowKeys.length})
+              </Button>
+            </Col>
+          </Row>
         </Col>
       </Row>
+
 
       {error && (
         <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />
@@ -288,7 +301,7 @@ const Properties = () => {
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
         okText={isEditing ? "Update" : "Add"}
-        width={1000}
+        width={800}
       >
         <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
           <Row gutter={16}>
@@ -305,7 +318,7 @@ const Properties = () => {
               <Form.Item
                 name="plot_number"
                 label="Plot Number"
-                rules={[{ required: true, message: "Please enter plot number" }]}
+                rules={[{ required: false, message: "Please enter plot number" }]}
               >
                 <Input />
               </Form.Item>
@@ -314,7 +327,7 @@ const Properties = () => {
               <Form.Item
                 name="survey_number"
                 label="Survey Number"
-                rules={[{ required: true, message: "Please enter survey number" }]}
+                rules={[{ required: false, message: "Please enter survey number" }]}
               >
                 <Input />
               </Form.Item>
@@ -323,7 +336,7 @@ const Properties = () => {
               <Form.Item
                 name="patta_number"
                 label="Patta Number"
-                rules={[{ required: true, message: "Please enter patta number" }]}
+                rules={[{ required: false, message: "Please enter patta number" }]}
               >
                 <Input />
               </Form.Item>
@@ -334,7 +347,7 @@ const Properties = () => {
               <Form.Item
                 name="subdivision_number"
                 label="Subdivision Number"
-                rules={[{ required: true, message: "Please enter subdivision number" }]}
+                rules={[{ required: false, message: "Please enter subdivision number" }]}
               >
                 <Input />
               </Form.Item>
@@ -343,7 +356,7 @@ const Properties = () => {
               <Form.Item
                 name="building_or_flat_no"
                 label="Building or Flat No"
-                rules={[{ required: true, message: "Please enter Building or Flat No" }]}
+                rules={[{ required: false, message: "Please enter Building or Flat No" }]}
               >
                 <Input />
               </Form.Item>
@@ -352,7 +365,7 @@ const Properties = () => {
               <Form.Item
                 name="village"
                 label="Village"
-                rules={[{ required: true, message: "Please enter Village" }]}
+                rules={[{ required: false, message: "Please enter Village" }]}
               >
                 <Input />
               </Form.Item>
@@ -361,7 +374,7 @@ const Properties = () => {
               <Form.Item
                 name="address1"
                 label="Address1"
-                rules={[{ required: true, message: "Please enter Address1" }]}
+                rules={[{ required: false, message: "Please enter Address1" }]}
               >
                 <Input />
               </Form.Item>
@@ -372,7 +385,7 @@ const Properties = () => {
               <Form.Item
                 name="address2"
                 label="Address2"
-                rules={[{ required: true, message: "Please enter Address2" }]}
+                rules={[{ required: false, message: "Please enter Address2" }]}
               >
                 <Input />
               </Form.Item>
@@ -381,7 +394,7 @@ const Properties = () => {
               <Form.Item
                 name="postcode"
                 label="Postcode"
-                rules={[{ required: true, message: "Please enter postcode" }]}
+                rules={[{ required: false, message: "Please enter postcode" }]}
               >
                 <Input />
               </Form.Item>
@@ -390,7 +403,7 @@ const Properties = () => {
               <Form.Item
                 name="locality"
                 label="Locality"
-                rules={[{ required: true, message: "Please enter Locality" }]}
+                rules={[{ required: false, message: "Please enter Locality" }]}
               >
                 <Input />
               </Form.Item>
@@ -399,7 +412,7 @@ const Properties = () => {
               <Form.Item
                 name="street"
                 label="Street"
-                rules={[{ required: true, message: "Please enter Street" }]}
+                rules={[{ required: false, message: "Please enter Street" }]}
               >
                 <Input />
               </Form.Item>
@@ -410,7 +423,7 @@ const Properties = () => {
               <Form.Item
                 name="purchase_price"
                 label="Purchase Price"
-                rules={[{ required: true, message: "Please enter Purchase Price" }]}
+                rules={[{ required: false, message: "Please enter Purchase Price" }]}
               >
                 <Input type="number"/>
               </Form.Item>
@@ -419,7 +432,7 @@ const Properties = () => {
               <Form.Item
                 name="purchase_date"
                 label="Purchase Date"
-                rules={[{ required: true, message: "Please enter Purchase Date" }]}
+                rules={[{ required: false, message: "Please enter Purchase Date" }]}
               >
                 <Input type="date"/>
               </Form.Item>
@@ -428,7 +441,7 @@ const Properties = () => {
               <Form.Item
                 name="guideline_value"
                 label="Purchase Guideline Value"
-                rules={[{ required: true, message: "Please enter Guideline Value" }]}
+                rules={[{ required: false, message: "Please enter Guideline Value" }]}
               >
                 <Input type="number"/>
               </Form.Item>
@@ -437,7 +450,7 @@ const Properties = () => {
             <Form.Item
                 name="market_value"
                 label="Market value"
-                rules={[{ required: true, message: "Please enter Market value" }]}
+                rules={[{ required: false, message: "Please enter Market value" }]}
               >
                 <Input type="number"/>
               </Form.Item>
@@ -448,7 +461,7 @@ const Properties = () => {
               <Form.Item
                 name="rental_value"
                 label="Rental Value"
-                rules={[{ required: true, message: "Please enter Rental Value" }]}
+                rules={[{ required: false, message: "Please enter Rental Value" }]}
               >
                 <Input />
               </Form.Item>
@@ -457,7 +470,7 @@ const Properties = () => {
               <Form.Item
                 name="age"
                 label="Age"
-                rules={[{ required: true, message: "Please enter Age" }]}
+                rules={[{ required: false, message: "Please enter Age" }]}
               >
                 <Input type="number" />
               </Form.Item>
@@ -475,7 +488,7 @@ const Properties = () => {
               <Form.Item
                 name="property_insurance"
                 label="Property Insurance"
-                rules={[{ required: true, message: "Please enter Property Insurance" }]}
+                rules={[{ required: false, message: "Please enter Property Insurance" }]}
               >
                 <Input />
               </Form.Item>
@@ -486,7 +499,7 @@ const Properties = () => {
               <Form.Item
                 name="insurance_expiry_date"
                 label="Insurance Expiry Date"
-                rules={[{ required: true, message: "Please enter Insurance Expiry Date" }]}
+                rules={[{ required: false, message: "Please enter Insurance Expiry Date" }]}
               >
                 <Input type="date"/>
               </Form.Item>
@@ -495,7 +508,7 @@ const Properties = () => {
               <Form.Item
                 name="apartment_name"
                 label="Apartment Name"
-                rules={[{ required: true, message: "Please enter Apartment Name" }]}
+                rules={[{ required: false, message: "Please enter Apartment Name" }]}
               >
                 <Input />
               </Form.Item>
@@ -504,7 +517,7 @@ const Properties = () => {
               <Form.Item
                 name="built_up_area"
                 label="Built Up Area"
-                rules={[{ required: true, message: "Please enter Built Up Area" }]}
+                rules={[{ required: false, message: "Please enter Built Up Area" }]}
               >
                 <Input />
               </Form.Item>
@@ -513,7 +526,7 @@ const Properties = () => {
               <Form.Item
                 name="carpet_area"
                 label="Carpet Area"
-                rules={[{ required: true, message: "Please enter Carpet Area" }]}
+                rules={[{ required: false, message: "Please enter Carpet Area" }]}
               >
                 <Input />
               </Form.Item>
@@ -524,7 +537,7 @@ const Properties = () => {
               <Form.Item
                 name="property_area"
                 label="Property Area"
-                rules={[{ required: true, message: "Please enter Property Area" }]}
+                rules={[{ required: false, message: "Please enter Property Area" }]}
               >
                 <Input />
               </Form.Item>
@@ -533,7 +546,7 @@ const Properties = () => {
               <Form.Item
                 name="facing"
                 label="Facing"
-                rules={[{ required: true, message: "Please enter Facing" }]}
+                rules={[{ required: false, message: "Please enter Facing" }]}
               >
                 <Input />
               </Form.Item>
@@ -542,7 +555,7 @@ const Properties = () => {
               <Form.Item
                 name="floor_type"
                 label="Floor Type"
-                rules={[{ required: true, message: "Please enter Floor Type" }]}
+                rules={[{ required: false, message: "Please enter Floor Type" }]}
               >
                 <Input />
               </Form.Item>
@@ -551,7 +564,7 @@ const Properties = () => {
               <Form.Item
                 name="floor"
                 label="Floor"
-                rules={[{ required: true, message: "Please enter Floor" }]}
+                rules={[{ required: false, message: "Please enter Floor" }]}
               >
                 <Input />
               </Form.Item>
@@ -562,7 +575,7 @@ const Properties = () => {
               <Form.Item
                 name="total_floor"
                 label="Total Floor"
-                rules={[{ required: true, message: "Please enter Total Floor" }]}
+                rules={[{ required: false, message: "Please enter Total Floor" }]}
               >
                 <Input />
               </Form.Item>
@@ -571,7 +584,7 @@ const Properties = () => {
               <Form.Item
                 name="furnishing"
                 label="Furnishing"
-                rules={[{ required: true, message: "Please enter Furnishing" }]}
+                rules={[{ required: false, message: "Please enter Furnishing" }]}
               >
                 <Input />
               </Form.Item>
@@ -580,7 +593,7 @@ const Properties = () => {
               <Form.Item
                 name="parking"
                 label="Parking"
-                rules={[{ required: true, message: "Please enter Parking" }]}
+                rules={[{ required: false, message: "Please enter Parking" }]}
               >
                 <Input />
               </Form.Item>
@@ -589,7 +602,7 @@ const Properties = () => {
               <Form.Item
                 name="kitchen_type"
                 label="Kitchen Type"
-                rules={[{ required: true, message: "Please enter Kitchen Type" }]}
+                rules={[{ required: false, message: "Please enter Kitchen Type" }]}
               >
                 <Input />
               </Form.Item>
@@ -600,7 +613,7 @@ const Properties = () => {
               <Form.Item
                 name="maintenance_cost"
                 label="Maintenance Cost"
-                rules={[{ required: true, message: "Please enter Maintenance Cost" }]}
+                rules={[{ required: false, message: "Please enter Maintenance Cost" }]}
               >
                 <Input />
               </Form.Item>
@@ -609,24 +622,24 @@ const Properties = () => {
               <Form.Item
                 name="description"
                 label="Description"
-                rules={[{ required: true, message: "Please enter Description" }]}
+                rules={[{ required: false, message: "Please enter Description" }]}
               >
                 <Input.TextArea rows={2} />
               </Form.Item>
             </Col>
             <Col span={6}>
-            <Form.Item name="bhk_type" label="BHK Type" rules={[{ required: true, message: 'Please select BHK type' }]}>
-  <Select placeholder="Select BHK type">
-    {bhkTypes.map((type) => (
-      <Option key={type.id} value={type.id}>
-        {type.name}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
+            <Form.Item name="bhk_type" label="BHK Type" rules={[{ required: false, message: 'Please select BHK type' }]}>
+                 <Select placeholder="Select BHK type">
+               {bhkTypes.map((type) => (
+               <Option key={type.id} value={type.id}>
+                  {type.name}
+                </Option>
+                  ))}
+                  </Select>
+                </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item name="city" label="City" rules={[{ required: true, message: 'Please select City' }]}>
+              <Form.Item name="city" label="City" rules={[{ required: false, message: 'Please select City' }]}>
               <Select placeholder="Select City">
                         {cities.map((c) => (
                           <Option key={c.id} value={c.id}>{c.city}</Option>
@@ -638,7 +651,7 @@ const Properties = () => {
           </Row>
           <Row gutter={16}>
             <Col span={6}>
-                <Form.Item name="state" label="State" rules={[{ required: true, message: 'Please select state' }]}>
+                <Form.Item name="state" label="State" rules={[{ required: false, message: 'Please select state' }]}>
                 <Select placeholder="Select State">
                         {states.map((s) => (
                           <Option key={s.id} value={s.id}>{s.state}</Option>
@@ -647,7 +660,7 @@ const Properties = () => {
                     </Form.Item>
             </Col>
             <Col span={6}>
-               <Form.Item name="country" label="Country" rules={[{ required: true, message: 'Please select country' }]}>
+               <Form.Item name="country" label="Country" rules={[{ required: false, message: 'Please select country' }]}>
                <Select placeholder="Select Country">
                         {countries.map((c) => (
                           <Option key={c.id} value={c.id}>{c.name}</Option>
@@ -656,35 +669,29 @@ const Properties = () => {
                     </Form.Item>
             </Col>
             <Col span={6}>
-            <Form.Item
-  name="ownership_type"
-  label="Ownership Type"
-  rules={[{ required: true, message: 'Please select an ownership type' }]}
->
-  <Select placeholder="Select Ownership Type">
-    {ownershipTypes.map((type) => (
-      <Option key={type.id} value={type.id}>
-        {type.name}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
+          <Form.Item name="ownership_type" label="Ownership type" rules={[{ required: false, message: 'Please select Ownership type' }]}>
+                 <Select placeholder="Select Ownership type">
+               {ownershipTypes.map((o) => (
+               <Option key={o.id} value={o.id}>{o.ownership_type}</Option>
+                  ))}
+                  </Select>
+                </Form.Item>
             </Col>
             <Col span={6}>
             <Form.Item
-  name="property_type"
-  label="Property Type"
-  rules={[{ required: true, message: 'Please select a property type' }]}
->
-  <Select placeholder="Select property type">
-    {propertyTypes.map((type) => (
-      <Option key={type.id} value={type.id}>
-        {type.name}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
-            </Col>
+                   name="property_type"
+                    label="Property Type"
+                   rules={[{ required: false, message: 'Please select a property type' }]}
+                      >
+                     <Select placeholder="Select property type">
+                      {propertyTypes.map((type) => (
+                      <Option key={type.id} value={type.id}>
+                       {type.type_name}
+                        </Option>
+                        ))}
+                    </Select>
+                    </Form.Item>
+               </Col>
           </Row>
           <Row gutter={16}>
             <Col span={6}>
@@ -709,7 +716,7 @@ const Properties = () => {
         open={isViewModalOpen}
         onCancel={() => setIsViewModalOpen(false)}
         footer={null}
-        width={1000}
+        width={800}
         
       >
         {viewRecord && (

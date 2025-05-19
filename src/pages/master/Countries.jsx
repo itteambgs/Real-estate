@@ -72,29 +72,15 @@ const Countries = () => {
     setIsModalOpen(true);
   };
 
-  // const handleDelete = async (id) => {
-  //   if (!window.confirm("Are you sure you want to delete this country?")) return;
-  //   const response = await deleteCountries(id);
-  //   if (response.success) {
-  //     setCountries((prev) => prev.filter((item) => item.id !== id));
-  //     message.success("Country deleted successfully");
-  //   } else {
-  //     message.error(`Delete failed: ${response.error}`);
-  //   }
-  // };
-
-
-    const handleDelete = async (id) => {
-        try {
-          await deleteCountries(id);
-          setCountries((prev) => prev.filter((item) => item.id !== id));
-          message.success("Deleted successfully");
-        } catch {
-          message.error("Failed to delete ownership type");
-        }
-      };
-
-
+  const handleDelete = async (id) => {
+    try {
+      await deleteCountries(id);
+      setCountries((prev) => prev.filter((item) => item.id !== id));
+      message.success("Deleted successfully");
+    } catch {
+      message.error("Failed to delete country");
+    }
+  };
 
   const handleBulkDelete = async () => {
     if (!selectedRowKeys.length) return;
@@ -131,32 +117,35 @@ const Countries = () => {
   };
 
   const columns = [
-    // { title: "ID", dataIndex: "id", key: "id", width: '20%' },
     {
       title: "ID",
       key: "index",
       width: "10%",
       render: (text, record, index) => index + 1,
     },
-    { title: "Name", dataIndex: "name", key: "name", width: '30%' },
-    { title: "Code", dataIndex: "code", key: "code", width: '30%' },
+    { title: "Name", dataIndex: "name", key: "name", width: 200, },
+    { title: "Code", dataIndex: "code", key: "code", width: 200, },
     {
       title: "Actions",
       key: "actions",
+      width: 200,
       render: (_, record) => (
         <>
-          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
-           <Popconfirm
-                      title="Are you sure to delete this?"
-                      onConfirm={() => handleDelete(record.id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Button type="link" danger>Delete</Button>
-                    </Popconfirm>
+          <Button type="link" onClick={() => handleEdit(record)}>
+            Edit
+          </Button>
+          <Popconfirm
+            title="Are you sure to delete this?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" danger>
+              Delete
+            </Button>
+          </Popconfirm>
         </>
       ),
-      width: '30%',
     },
   ];
 
@@ -164,32 +153,53 @@ const Countries = () => {
     <div>
       <Typography.Title level={2}>Countries</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }} align="middle">
+        {/* Search Input */}
+        <Col xs={24} md={16}>
           <Search
             placeholder="Search by name or code"
             allowClear
             enterButton
             onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setSelectedRowKeys([]);
+            }}
+            style={{ width: "100%" }}
           />
         </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add Country
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
+
+        {/* Buttons */}
+        <Col xs={24} md={8}>
+          <Row gutter={[8, 8]} justify="end">
+            <Col xs={24} sm={12}>
+              <Button
+                type="primary"
+                block
+                style={{ minWidth: 120 }}
+                onClick={handleAdd}
+              >
+                Add Country
+              </Button>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Button
+                danger
+                block
+                style={{ minWidth: 140 }}
+                onClick={handleBulkDelete}
+                disabled={!selectedRowKeys.length}
+              >
+                Delete Selected ({selectedRowKeys.length})
+              </Button>
+            </Col>
+          </Row>
         </Col>
       </Row>
 
-      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
+      {error && (
+        <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />
+      )}
 
       {loading ? (
         <div style={{ textAlign: "center", marginTop: 50 }}>
@@ -204,7 +214,8 @@ const Countries = () => {
           dataSource={countries}
           columns={columns}
           rowKey="id"
-          scroll={{ x: '100%' }}
+          pagination={{ pageSize: 10 }}
+           scroll={{ x: "max-content" }}
         />
       )}
 

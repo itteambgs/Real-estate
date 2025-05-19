@@ -223,33 +223,40 @@ const Cities = () => {
     <div>
       <Typography.Title level={2}>Cities</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by City, State, or Country"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => {
-              setCurrentPage(1);
-              setSearchTerm(e.target.value);
-            }}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Row gutter={8} justify="end">
-            <Col>
-              <Button type="primary" onClick={handleAdd}>Add City</Button>
-            </Col>
-            <Col>
-              <Button danger onClick={handleBulkDelete} disabled={!selectedRowKeys.length}>
-                Delete Selected
-              </Button>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+  <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by City, State, or Country"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => {
+        setCurrentPage(1);
+        setSearchTerm(e.target.value);
+      }}
+      style={{ width: '100%' }}
+    />
+  </Col>
+  <Col xs={24} sm={24} md={8}>
+    <Row gutter={[8, 8]} justify="end">
+      <Col xs={24} sm={12} md={12}>
+        <Button type="primary" block onClick={handleAdd}>
+          Add City
+        </Button>
+      </Col>
+      <Col xs={24} sm={12} md={12}>
+        <Button
+          danger
+          block
+          onClick={handleBulkDelete}
+          disabled={!selectedRowKeys.length}
+        >
+         Delete Selected ({selectedRowKeys.length})
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+</Row>
 
       {error && <Alert type="error" message={error} />}
       {loading ? (
@@ -257,6 +264,7 @@ const Cities = () => {
       ) : (
         <>
           <Table
+          scroll={{ x: "max-content" }}
             rowKey="id"
             columns={columns}
             dataSource={cities}

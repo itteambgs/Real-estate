@@ -8,7 +8,7 @@ import {
   getBHKTypes,
   getStates,
   getCountries,
-  getOwnership,
+  getownership,
   getPropertyTypes,
   getUsers,
 } from "helpers/apiHelper";
@@ -70,7 +70,7 @@ const Properties = () => {
         getCities(),
         getStates(),
         getCountries(),
-        getOwnership(),
+        getownership(),
         getPropertyTypes(),
         getUsers(),
         getBHKTypes(),

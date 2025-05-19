@@ -92,14 +92,26 @@ const BHKType = () => {
       }
     };
 
-  const handleBulkDelete = async () => {
-    if (!selectedRowKeys.length) return;
-    if (!window.confirm("Delete selected BHK types?")) return;
-    await Promise.all(selectedRowKeys.map((id) => deleteBHKType(id)));
-    setSelectedRowKeys([]);
-    fetchBHKTypes();
-    message.success("Deleted selected items");
-  };
+   const handleBulkDelete = async () => {
+     if (selectedRowKeys.length) return;
+     Modal.confirm({
+       title: "Are you sure?",
+       content: `Delete ${selectedRowKeys.length} selected properties?`,
+       okText: "Yes, delete",
+       okType: "danger",
+       cancelText: "Cancel",
+       onOk: async () => {
+         try {
+           await Promise.all(selectedRowKeys.map((id) => deleteProperty(id)));
+           message.success("Selected properties deleted");
+           setSelectedRowKeys([]);
+           fetchAllProperties();
+         } catch {
+           message.error("Failed to delete selected properties");
+         }
+       },
+     });
+   };
 
   const handleFormSubmit = async (values) => {
     if (isEditing) {
@@ -159,30 +171,39 @@ const BHKType = () => {
     <div>
       <Typography.Title level={2}>BHK Types</Typography.Title>
 
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Col>
-          <Search
-            placeholder="Search by BHK Name or BHK Type	"
-            allowClear
-            enterButton
-            onSearch={(value) => setSearchTerm(value)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: 550 }}
-          />
-        </Col>
-        <Col>
-          <Button type="primary" onClick={handleAdd} style={{ marginRight: 8 }}>
-            Add BHK Type
-          </Button>
-          <Button
-            danger
-            onClick={handleBulkDelete}
-            disabled={!selectedRowKeys.length}
-          >
-            Delete Selected
-          </Button>
-        </Col>
-      </Row>
+    <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+  <Col xs={24} sm={24} md={16}>
+    <Search
+      placeholder="Search by Name or BHK Type"
+      allowClear
+      enterButton
+      onSearch={(value) => setSearchTerm(value)}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={{ width: "100%" }}
+    />
+  </Col>
+
+  <Col xs={24} sm={12} md={4}>
+    <Button
+      type="primary"
+      onClick={handleAdd}
+      style={{ width: "100%" }}
+    >
+      Add BHK Type
+    </Button>
+  </Col>
+
+  <Col xs={24} sm={12} md={4}>
+    <Button
+      danger
+      onClick={handleBulkDelete}
+      disabled={!selectedRowKeys.length}
+      style={{ width: "100%" }}
+    >
+      Delete Selected ({selectedRowKeys.length})
+    </Button>
+  </Col>
+</Row>
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 

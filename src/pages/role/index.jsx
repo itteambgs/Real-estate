@@ -1,18 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  getRoles,
-  deleteRole
-} from '../../helpers/apiHelper';
-
+import { getRoles, deleteRole } from '../../helpers/apiHelper';
 import RoleList from './RoleList';
-
-import {
-  Typography,
-  Button,
-  message
-} from 'antd';
-
+import { Typography, Button, message } from 'antd';
 
 const { Title } = Typography;
 
@@ -34,14 +24,23 @@ const RolePage = () => {
   };
 
   const handleDelete = async (roleId) => {
-    await deleteRole(roleId);
-    loadRoles();
-    message.success('Role deleted');
+    const response = await deleteRole(roleId);
+    if (response.success) {
+      message.success('Role deleted');
+      loadRoles(); // Refresh the list
+    } else {
+      message.error(response.error || 'Failed to delete role');
+    }
   };
 
   return (
     <div style={{ padding: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem'
+      }}>
         <Title level={2} style={{ margin: 0 }}>Role Management</Title>
         <Button type="primary" onClick={() => navigate('/role/create')}>
           + Add Role
@@ -49,7 +48,6 @@ const RolePage = () => {
       </div>
 
       <RoleList roles={roles} onEdit={handleEdit} onDelete={handleDelete} />
-  
     </div>
   );
 };

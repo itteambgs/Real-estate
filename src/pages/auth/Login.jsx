@@ -34,9 +34,10 @@ export default function Login() {
     const result = await loginUser(email, password);
 
     if (result.success) {
-      navigate('/dashboard/default'); // Redirect after login
+      navigate('/dashboard/default'); // Redirect after successful login
     } else {
-      setError(result.error);
+      setError(result.error || 'Email or password is incorrect');
+      setPassword(''); // Clear password field
     }
   };
 
@@ -44,19 +45,53 @@ export default function Login() {
     <AuthWrapper>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: { xs: -0.5, sm: 0.5 } }}>
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              mb: { xs: -0.5, sm: 0.5 }
+            }}
+          >
             <Typography variant="h3">Login</Typography>
-            <Typography component={Link} to={'/register'} variant="body1" sx={{ textDecoration: 'none' }} color="primary">
+            <Typography
+              component={Link}
+              to={'/register'}
+              variant="body1"
+              sx={{ textDecoration: 'none' }}
+              color="primary"
+            >
               Don&apos;t have an account?
             </Typography>
           </Stack>
         </Grid>
         <Grid item xs={12}>
           <Stack spacing={2}>
-            <TextField label="Email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} />
-            <TextField label="Password" fullWidth type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {error && <Typography color="error">{error}</Typography>}
-            <Button variant="contained" color="primary" onClick={handleLogin}>Login</Button>
+            <TextField
+              label="Email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              label="Password"
+              fullWidth
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && (
+              <Typography color="error" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleLogin}
+            >
+              Login
+            </Button>
           </Stack>
         </Grid>
       </Grid>

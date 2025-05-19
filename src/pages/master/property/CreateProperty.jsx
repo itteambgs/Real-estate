@@ -1,28 +1,110 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Select, DatePicker, InputNumber, message } from 'antd';
+import {
+  getCountries,
+  getStates,
+  getBHKTypes,
+  getCities,
+  getownership,
+  getPropertyType,
+  getUsers,
+  addProperty
+} from 'helpers/apiHelper';
+
 const { TextArea } = Input;
 const { Option } = Select;
 
-const CreateProperty = ({ formData, setFormData, handleSubmit, loading, success, error, dropdownOptions }) => {
+const CreateProperty = () => {
   const [form] = Form.useForm();
-
-  const handleChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const [loading, setLoading] = useState(false);
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
+  const [bhktypes, setBhkTypes] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [ownership, setOwnership] = useState([]);
+  const [propertyType, setPropertyType] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    console.log("Dropdown Options: ", dropdownOptions);  // To check if dropdownOptions are passed correctly
-  }, [dropdownOptions]);
+    fetchDropdownData();
+  }, []);
+
+  const fetchDropdownData = async () => {
+    try {
+      const [
+        countriesRes,
+        statesRes,
+        bhkRes,
+        citiesRes,
+        ownershipRes,
+        propertyTypeRes,
+        usersRes
+      ] = await Promise.all([
+        getCountries(),
+        getStates(),
+        getBHKTypes(),
+        getCities(),
+        getownership(),
+        getPropertyType(),
+        getUsers() // Fetch user list
+      ]);
+
+      setCountries(countriesRes.results || []);
+      setStates(statesRes.results || []);
+      setBhkTypes(bhkRes.results || []);
+      setCities(citiesRes.results || []);
+      setOwnership(ownershipRes.results || []);
+      setPropertyType(propertyTypeRes.results || []);
+      setUsers(usersRes.results || []);
+    } catch (err) {
+      message.error("Failed to load dropdown data");
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const selectedUserId = values.user;
+
+      const payload = {
+        ...values,
+        user: selectedUserId,            // ✔ Assign to actual user field
+        added_by: selectedUserId,        // optional, if backend accepts it
+        last_edited_by: selectedUserId,  // optional
+        purchase_date: values.purchase_date?.format("YYYY-MM-DD") || null,
+        insurance_expiry_date: values.insurance_expiry_date?.format("YYYY-MM-DD") || null,
+      };
+
+      const result = await addProperty(payload);
+      if (result.success) {
+        message.success("Property added successfully");
+        form.resetFields();
+
+        // Redirect to master/properties page
+        window.location.href = '/master/properties'; // Redirect after successful submission
+      } else {
+        message.error(result.error || "Failed to submit property");
+      }
+    } catch (err) {
+      message.error("Submission error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={handleSubmit}
-      initialValues={formData}
-    >
-      {/* Text Inputs */}
-      {[  
+      <>
+      <h1>Add property</h1>
+    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Form.Item label="User" name="user" rules={[{ required: true }]}>
+        <Select placeholder="Select User" loading={users.length === 0}>
+          {users.map(user => (
+            <Option key={user.id} value={user.id}>{user.username}</Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      {[ 
         { label: "Property Name", name: "property_name" },
         { label: "Plot Number", name: "plot_number" },
         { label: "Survey Number", name: "survey_number" },
@@ -55,112 +137,81 @@ const CreateProperty = ({ formData, setFormData, handleSubmit, loading, success,
         { label: "Maintenance Cost", name: "maintenance_cost" },
       ].map(field => (
         <Form.Item key={field.name} label={field.label} name={field.name}>
-          <Input onChange={e => handleChange(field.name, e.target.value)} />
+          <Input />
         </Form.Item>
       ))}
 
-      {/* Number and Date Inputs */}
       <Form.Item label="Purchase Price" name="purchase_price">
-        <InputNumber style={{ width: '100%' }} onChange={value => handleChange('purchase_price', value)} />
+        <InputNumber style={{ width: '100%' }} />
       </Form.Item>
 
       <Form.Item label="Purchase Date" name="purchase_date">
-        <DatePicker style={{ width: '100%' }} onChange={(date, dateString) => handleChange('purchase_date', dateString)} />
+        <DatePicker style={{ width: '100%' }} />
       </Form.Item>
 
       <Form.Item label="Insurance Expiry Date" name="insurance_expiry_date">
-        <DatePicker style={{ width: '100%' }} onChange={(date, dateString) => handleChange('insurance_expiry_date', dateString)} />
+        <DatePicker style={{ width: '100%' }} />
       </Form.Item>
 
-      {/* Dropdowns */}
       <Form.Item label="BHK Type" name="bhk_type">
-        <Select onChange={value => handleChange('bhk_type', value)} allowClear>
-          {dropdownOptions?.bhkTypes?.length ? (
-            dropdownOptions.bhkTypes.map(option => (
-              <Option key={option.value} value={option.value}>{option.text}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select BHK Type" loading={bhktypes.length === 0}>
+          {bhktypes.map(bhk => (
+            <Option key={bhk.id} value={bhk.id}>{bhk.name}</Option>
+          ))}
         </Select>
       </Form.Item>
 
       <Form.Item label="City" name="city">
-        <Select onChange={value => handleChange('city', value)} allowClear>
-          {dropdownOptions?.cities?.length ? (
-            dropdownOptions.cities.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select City" loading={cities.length === 0}>
+          {cities.map(city => (
+            <Option key={city.id} value={city.id}>{city.city}</Option>
+          ))}
         </Select>
       </Form.Item>
 
       <Form.Item label="State" name="state">
-        <Select onChange={value => handleChange('state', value)} allowClear>
-          {dropdownOptions?.states?.length ? (
-            dropdownOptions.states.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select State" loading={states.length === 0}>
+          {states.map(state => (
+            <Option key={state.id} value={state.id}>{state.state}</Option>
+          ))}
         </Select>
       </Form.Item>
 
       <Form.Item label="Country" name="country">
-        <Select onChange={value => handleChange('country', value)} allowClear>
-          {dropdownOptions?.countries?.length ? (
-            dropdownOptions.countries.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select Country" loading={countries.length === 0}>
+          {countries.map(country => (
+            <Option key={country.id} value={country.id}>{country.name}</Option>
+          ))}
         </Select>
       </Form.Item>
 
       <Form.Item label="Ownership Type" name="ownership_type">
-        <Select onChange={value => handleChange('ownership_type', value)} allowClear>
-          {dropdownOptions?.ownershipTypes?.length ? (
-            dropdownOptions.ownershipTypes.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select Ownership" loading={ownership.length === 0}>
+          {ownership.map(owner => (
+            <Option key={owner.id} value={owner.id}>{owner.ownership_type}</Option>
+          ))}
         </Select>
       </Form.Item>
 
       <Form.Item label="Property Type" name="property_type">
-        <Select onChange={value => handleChange('property_type', value)} allowClear>
-          {dropdownOptions?.propertyTypes?.length ? (
-            dropdownOptions.propertyTypes.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))
-          ) : (
-            <Option value="empty">No options available</Option>
-          )}
+        <Select placeholder="Select Property Type" loading={propertyType.length === 0}>
+          {propertyType.map(type => (
+            <Option key={type.id} value={type.id}>{type.type_name}</Option>
+          ))}
         </Select>
       </Form.Item>
 
-      {/* Description */}
       <Form.Item label="Description" name="description">
-        <TextArea rows={4} onChange={e => handleChange('description', e.target.value)} />
+        <TextArea rows={4} />
       </Form.Item>
 
-      {/* Messages */}
-      {success && message.success(success)}
-      {error && message.error(error)}
-
-      {/* Submit Button */}
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={loading}>
           Submit Property
         </Button>
       </Form.Item>
     </Form>
+    </>
   );
 };
 

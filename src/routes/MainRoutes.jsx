@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom';
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
+import CreateProperty from 'pages/master/property/CreateProperty'; 
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -23,6 +24,7 @@ const Countries = Loadable(lazy(() => import('pages/master/Countries')));
 const States = Loadable(lazy(() => import('pages/master/States')));
 const Cities = Loadable(lazy(() => import('pages/master/Cities')));
 const Properties = Loadable(lazy(() => import('pages/master/property/Properties')));
+// const addProperties = Loadable(lazy(() => import('pages/master/property/CreateProperty'))); // Already imported CreateProperty
 const Document = Loadable(lazy(() => import('pages/master/Document')));
 const OwnershipType = Loadable(lazy(() => import('pages/master/OwnershipType')));
 const BHKType = Loadable(lazy(() => import('pages/master/BHKType')));
@@ -32,13 +34,10 @@ const CreateProptype=Loadable(lazy(() => import(('pages/master/property type/Cre
 const EditProptype=Loadable(lazy(() => import(('pages/master/property type/EditProptype'))));
 const ReadProptype=Loadable(lazy(() => import(('pages/master/property type/Readproptype')))); 
 
-
-
 const DocumentType = Loadable(lazy(() => import('pages/master/DocumentType')));
 
 const Profile = Loadable(lazy(() => import('@/layout/Dashboard/Header/HeaderContent/Profile')));
 const EditProfile = Loadable(lazy(() => import('@/layout/Dashboard/Header/HeaderContent/Profile/EditProfile')));
-
 
 const RolePage = Loadable(lazy(() => import('pages/role')));
 const CreateRolePage = Loadable(lazy(() => import('pages/role/CreateRolePage')));
@@ -93,14 +92,14 @@ const MainRoutes = {
         { path: 'master/states', element: <States /> },
         { path: 'master/cities', element: <Cities /> },
         { path: 'master/properties', element: <Properties /> },
-        { path: 'master/document', element: <Document />},
+        { path: 'master/properties/add-properties', element: <CreateProperty /> },  // Add Property
+        { path: 'master/properties/edit-properties/:id', element: <CreateProperty /> },  // Edit Property (assuming same component as CreateProperty for editing)
+        { path: 'master/document', element: <Document /> },
         { path: 'master/ownership-type', element: <OwnershipType /> },
         { path: 'master/bhk-type', element: <BHKType /> },
-        // { path: 'master/property-type', element: <PropertyType /> },
-        { path: 'master/property-type/create', element: <CreateProptype />},
-        
-        { path: 'master/property-type/edit/:id', element: <EditProptype />},
-        { path: 'master/property-type/', element: <ReadProptype />},
+        { path: 'master/property-type/create', element: <CreateProptype /> },
+        { path: 'master/property-type/edit/:id', element: <EditProptype /> },
+        { path: 'master/property-type/', element: <ReadProptype /> },
         { path: 'master/document-type', element: <DocumentType /> },
         {
           path: 'profile',
@@ -115,7 +114,7 @@ const MainRoutes = {
           element: <RolePage />
         },
         {
-          path:'role/create',
+          path: 'role/create',
           element: <CreateRolePage />
         },
         {
@@ -126,8 +125,7 @@ const MainRoutes = {
           path: 'user-role',
           element: <IndexUser />
         },
-
-         {
+        {
           path: 'add-user',
           element: <AddUser />
         },
@@ -135,8 +133,6 @@ const MainRoutes = {
           path: 'edit-user/:id',
           element: <EditUser />
         }
-       
-        
       ]
     }
   ]

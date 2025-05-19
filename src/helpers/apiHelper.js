@@ -75,6 +75,7 @@ export const loginUser = async (email, password) => {
   try {
     const response = await axios.post(AUTH_ENDPOINTS.login, { email, password });
     const { access, refresh } = response.data;
+
     const userResponse = await axios.get(AUTH_ENDPOINTS.user, {
       headers: { Authorization: `Bearer ${access}` },
     });
@@ -82,10 +83,18 @@ export const loginUser = async (email, password) => {
     setAuthTokens(access, refresh);
     return { success: true, data: userResponse.data };
   } catch (error) {
+    const status = error.response?.status;
+    let message = 'Login failed';
+
+    if (status === 401 || status === 400) {
+      message = 'Email or password is incorrect';
+    }
+
     console.error('Login Error:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Login failed' };
+    return { success: false, error: message };
   }
 };
+
 
 export const getUserProfile = async () => {
   try {
@@ -210,19 +219,16 @@ export const deleteCountries = async (id) => {
 };
 
 
-//states
+// ===========================x=========================
+// This API list All States to the system
 
-export const getStates = async () => {
-  try {
-    const response = await apiClient.get('/states/');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching states:', error.response?.data || error.message);
-    return [];
-  }
+// getStates
+export const getStates = async (query = "") => {
+  const response = await apiClient.get(`/states/${query}`);
+  return response.data;
 };
 
-
+// addStates
 export const addStates = async (data) => {
   try {
     const response = await apiClient.post("/states/", data);
@@ -252,7 +258,8 @@ export const deleteStates = async (id) => {
   }
 };
 
-//cites
+// ===========================x=========================
+// This API list All cities to the system
 
 // getCities
 export const getCities = async (query = "") => {
@@ -291,6 +298,8 @@ export const deleteCity = async (id) => {
 };
 
 
+
+
 export const getProperties = async () => {
   try {
     const response = await apiClient.get('/properties/');
@@ -307,9 +316,10 @@ export const addProperty = async (propertyData) => {
   try {
     const response = await apiClient.post('/properties/', propertyData);
     return { success: true, data: response.data };
+    
   } catch (error) {
     console.error('Error adding property:', error.response?.data || error);
-    return { success: false, error: error.response?.data || 'Failed to add property' };
+    return { success: false, error: error.response?.data?.detail || 'Failed to add property' };
   }
 };
 
@@ -341,7 +351,7 @@ export const getDropdownOptions = async () => {
     };
   } catch (error) {
     console.error("Failed to fetch dropdowns", error);
-    throw error;
+    // throw error;
   }
 };
 
@@ -377,6 +387,16 @@ export const createPropertyType = async (data) => {
   }
 };
 
+
+export const getPropertyTypes = async () => {
+  try {
+    const response = await apiClient.get('/property-types/');
+    return response.data; // <-- What is the structure here?
+  } catch (error) {
+    console.error('Error fetching property types:', error);
+    return [];
+  }
+};
 export const getPropertyType = async () => {
   try {
     const response = await apiClient.get('/property-types/', );
@@ -493,6 +513,18 @@ export const deleteBHKType = async (id) => {
 // This API list All OwnershipType to the system
 
 //getownership
+// export const getownership = async () => {
+//   try {
+//     const response = await apiClient.get('/ownership-types/');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching ownership:', error.response?.data || error.message);
+//     return [];
+//   }
+// };
+
+
+//getownership
 export const getownership = async () => {
   try {
     const response = await apiClient.get('/ownership-types/');
@@ -502,7 +534,6 @@ export const getownership = async () => {
     return [];
   }
 };
-
 // addOwnershipType
 export const addOwnershipType = async (data) => {
   try {
@@ -618,6 +649,7 @@ export const getRoles = async () => {
   }
 };
 
+
 export const createRole = async (roleData) => {
   try {
     const response = await apiClient.post('/create-role/', roleData);
@@ -702,15 +734,41 @@ export const getUsers = async () => {
 
 // ====== Permissions API ======
 
+// export const getPermissions = async () => {
+//   try {
+//     const response = await apiClient.get('/get-permissions/');
+//     console.log('User Permissions:', response.data); // log actual permissions
+//     return response.data; // because the API response is an array
+//   } catch (error) {
+//     console.error('Error fetching permissions:', error);
+//     return [];
+//   }
+// };
 export const getPermissions = async () => {
   try {
     const response = await apiClient.get('/get-permissions/');
-    return response.data;
+    console.log('Permissions received:', response.data);
+    return response.data; // Return the full objects, not just codenames
   } catch (error) {
     console.error('Error fetching permissions:', error);
     return [];
   }
 };
+
+
+
+//user info permissions
+
+export const getUserInfo = async () => {
+  try {
+    const response = await apiClient.get('/user-info/');
+    return response.data.permissions; // return the flat list of permission strings
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    throw error;
+  }
+};
+
 //assign permissions to role
 
 
@@ -727,15 +785,15 @@ export const assignPermissionsToRole = async (roleId, permissionIds) => {
   }
 };
 
-export const getRolePermissions = async (roleId) => {
-  try {
-    const response = await apiClient.get(`/roles/${roleId}/permissions/`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching role permissions:', error);
-    return [];
-  }
-};
+// export const getRolePermissions = async (roleId) => {
+//   try {
+//     const response = await apiClient.get(`/roles/${roleId}/permissions/`);
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching role permissions:', error);
+//     return [];
+//   }
+// };
 
 // export const updateUserRole = async (id, roleData) => {
 //   try {

@@ -12,7 +12,7 @@ export default function ProfileTab() {
 
   const handleLogout = () => {
     logoutUser();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
